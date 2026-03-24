@@ -1,154 +1,128 @@
-// ── Storage Functions ────────────────────────────────────────────────
-
-function loadApiKeys() {
-  const saved = localStorage.getItem('stockAnalyzerApiKeys');
-  if (saved) {
-    try {
-      state.apiKeys = { ...state.apiKeys, ...JSON.parse(saved) };
-    } catch (e) {
-      console.error('Failed to load API keys:', e);
-    }
-  }
-  updateApiKeyStatus();
-}
-
-function saveApiKeys() {
-  localStorage.setItem('stockAnalyzerApiKeys', JSON.stringify(state.apiKeys));
-  updateApiKeyStatus();
-}
-
-function updateApiKeyStatus() {
-  const finnhubStatus = document.getElementById('finnhubStatus');
-  const finnhubKeyStatus = document.getElementById('finnhubKeyStatus');
-  
-  if (state.apiKeys.finnhub) {
-    finnhubStatus.className = 'status-badge connected';
-    finnhubStatus.innerHTML = '<span>●</span><span>Finnhub: Connected</span>';
-    finnhubKeyStatus.className = 'status-badge connected';
-    finnhubKeyStatus.textContent = 'Configured';
-    document.getElementById('finnhubKeyInput').value = state.apiKeys.finnhub;
-  } else {
-    finnhubStatus.className = 'status-badge disconnected';
-    finnhubStatus.innerHTML = '<span>●</span><span>Finnhub: Not Connected</span>';
-    finnhubKeyStatus.className = 'status-badge disconnected';
-    finnhubKeyStatus.textContent = 'Not Set';
-    document.getElementById('finnhubKeyInput').value = '';
-  }
-  
-  document.getElementById('corsProxyInput').value = state.apiKeys.corsProxy;
-}
-
-// ── UI Control Functions ─────────────────────────────────────────────
+// ── Main Entry Point ─────────────────────────────────────────────────
 
 function setPhase(phase) {
-  const loadingText = document.getElementById('loadingText');
-  if (loadingText) loadingText.textContent = phase;
+  const el = document.getElementById('loadingText');
+  if (el) el.textContent = phase;
 }
 
 function showLivePrice(priceData) {
-  const livePriceValue = document.getElementById('livePriceValue');
-  const livePriceChange = document.getElementById('livePriceChange');
-  const livePriceBadge = document.getElementById('livePriceBadge');
+  const valueEl = document.getElementById('livePriceValue');
+  const changeEl = document.getElementById('livePriceChange');
+  const badgeEl = document.getElementById('livePriceBadge');
   
-  if (livePriceValue) livePriceValue.textContent = `${priceData.currency} ${priceData.currentPrice}`;
-  if (livePriceChange) {
-    livePriceChange.textContent = priceData.priceChangeToday || '';
-    livePriceChange.className = 'live-price-change ' + 
-      (priceData.priceChangeToday?.includes('+') ? 'positive' : 'negative');
+  if (valueEl) valueEl.textContent = `${priceData.currency} ${priceData.currentPrice}`;
+  if (changeEl) {
+    changeEl.textContent = priceData.priceChangeToday || '';
+    changeEl.className = 'live-price-change ' + (priceData.priceChangeToday?.includes('+') ? 'positive' : 'negative');
   }
-  if (livePriceBadge) livePriceBadge.classList.remove('hidden');
+  if (badgeEl) badgeEl.classList.remove('hidden');
 }
 
 function showError(message) {
-  const errorSection = document.getElementById('errorSection');
-  if (errorSection) {
-    errorSection.textContent = '✕ ' + message;
-    errorSection.classList.remove('hidden');
+  const el = document.getElementById('errorSection');
+  if (el) {
+    el.textContent = '✕ ' + message;
+    el.classList.remove('hidden');
   }
 }
 
 function hideError() {
-  const errorSection = document.getElementById('errorSection');
-  if (errorSection) errorSection.classList.add('hidden');
+  const el = document.getElementById('errorSection');
+  if (el) el.classList.add('hidden');
 }
 
 function setLoading(isLoading) {
   state.loading = isLoading;
-  const analyzeBtn = document.getElementById('analyzeBtn');
-  const loadingSection = document.getElementById('loadingSection');
-  const livePriceBadge = document.getElementById('livePriceBadge');
-  const dataSourceStatus = document.getElementById('dataSourceStatus');
+  const btn = document.getElementById('analyzeBtn');
+  const section = document.getElementById('loadingSection');
+  const badge = document.getElementById('livePriceBadge');
+  const status = document.getElementById('dataSourceStatus');
   
-  if (analyzeBtn) {
-    analyzeBtn.disabled = isLoading;
-    analyzeBtn.textContent = isLoading ? 'RUNNING…' : 'ANALYZE →';
+  if (btn) {
+    btn.disabled = isLoading;
+    btn.textContent = isLoading ? 'RUNNING…' : 'ANALYZE →';
   }
-  if (loadingSection) loadingSection.classList.toggle('hidden', !isLoading);
-  if (livePriceBadge && !isLoading) livePriceBadge.classList.add('hidden');
-  if (dataSourceStatus && !isLoading) dataSourceStatus.innerHTML = '';
+  if (section) section.classList.toggle('hidden', !isLoading);
+  if (badge && !isLoading) badge.classList.add('hidden');
+  if (status && !isLoading) status.innerHTML = '';
 }
 
 function toggleSettingsPanel() {
-  const apiSettingsPanel = document.getElementById('apiSettingsPanel');
-  if (apiSettingsPanel) apiSettingsPanel.classList.toggle('hidden');
+  const el = document.getElementById('apiSettingsPanel');
+  if (el) el.classList.toggle('hidden');
 }
 
-// ── Test API Connection ──────────────────────────────────────────────
-
-async function testConnection() {
-  const apiKey = document.getElementById('finnhubKeyInput').value.trim();
-  const resultDiv = document.getElementById('testConnectionResult');
-  const testConnectionBtn = document.getElementById('testConnectionBtn');
+async function testConnection(apiName) {
+  const keyInput = document.getElementById(`${apiName}KeyInput`);
+  const resultDiv = document.getElementById(`test${apiName}Result`);
+  const btn = document.getElementById(`test${apiName}Btn`);
   
+  const apiKey = keyInput.value.trim();
   if (!apiKey) {
     if (resultDiv) {
       resultDiv.textContent = '❌ Please enter an API key first';
-      resultDiv.style.color = '#f87171';
+      resultDiv.style.color = '#dc2626';
       resultDiv.classList.remove('hidden');
     }
     return;
   }
   
-  if (testConnectionBtn) {
-    testConnectionBtn.disabled = true;
-    testConnectionBtn.textContent = '⏳ Testing...';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Testing...';
   }
   
   try {
-    const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${apiKey}`);
+    let url, testSymbol = 'AAPL';
     
-    if (response.ok) {
-      const data = await response.json();
-      if (resultDiv) {
-        if (data.c !== 0) {
-          resultDiv.textContent = '✅ Connection successful! AAPL: $' + data.c;
-          resultDiv.style.color = '#4ade80';
-        } else {
-          resultDiv.textContent = '⚠ API key valid but market may be closed';
-          resultDiv.style.color = '#fbbf24';
-        }
-      }
-    } else {
-      if (resultDiv) {
-        resultDiv.textContent = '❌ Connection failed: ' + response.status;
-        resultDiv.style.color = '#f87171';
+    if (apiName === 'Finnhub') {
+      url = `https://finnhub.io/api/v1/quote?symbol=${testSymbol}&token=${apiKey}`;
+    } else if (apiName === 'Alpha') {
+      url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${testSymbol}&apikey=${apiKey}`;
+    } else if (apiName === 'Massive') {
+      url = `https://api.massive.com/v1/quote?symbol=${testSymbol}&key=${apiKey}`;
+    }
+    
+    const response = await fetch(url);
+    
+    if (resultDiv) {
+      if (response.ok) {
+        resultDiv.textContent = '✅ Connection successful!';
+        resultDiv.style.color = '#059669';
+      } else {
+        resultDiv.textContent = `❌ Connection failed: ${response.status}`;
+        resultDiv.style.color = '#dc2626';
       }
     }
   } catch (error) {
     if (resultDiv) {
       resultDiv.textContent = '❌ Connection failed: ' + error.message;
-      resultDiv.style.color = '#f87171';
+      resultDiv.style.color = '#dc2626';
     }
   } finally {
-    if (testConnectionBtn) {
-      testConnectionBtn.disabled = false;
-      testConnectionBtn.textContent = '🧪 Test Connection';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = `🧪 Test ${apiName}`;
     }
     if (resultDiv) resultDiv.classList.remove('hidden');
   }
 }
 
-// ── Main Analysis Function ───────────────────────────────────────────
+function saveSettings() {
+  const finnhubInput = document.getElementById('finnhubKeyInput');
+  const alphaInput = document.getElementById('alphaKeyInput');
+  const massiveInput = document.getElementById('massiveKeyInput');
+  const corsInput = document.getElementById('corsProxyInput');
+  
+  state.apiKeys.finnhub = finnhubInput?.value.trim() || '';
+  state.apiKeys.alphaVantage = alphaInput?.value.trim() || '';
+  state.apiKeys.massive = massiveInput?.value.trim() || '';
+  state.apiKeys.corsProxy = corsInput?.value.trim() || 'https://corsproxy.io/?';
+  
+  saveApiKeys();
+  toggleSettingsPanel();
+  updateApiKeyStatus();
+}
 
 async function analyze() {
   const tickerInput = document.getElementById('tickerInput');
@@ -175,7 +149,7 @@ async function analyze() {
     showLivePrice(priceData);
 
     setPhase('Running valuation analysis…');
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const analysis = generateValuationAnalysis(priceData);
     state.result = analysis;
@@ -193,47 +167,33 @@ async function analyze() {
   }
 }
 
-// ── Save Settings ────────────────────────────────────────────────────
-
-function saveSettings() {
-  const finnhubKeyInput = document.getElementById('finnhubKeyInput');
-  const corsProxyInput = document.getElementById('corsProxyInput');
-  
-  state.apiKeys.finnhub = finnhubKeyInput.value.trim();
-  state.apiKeys.corsProxy = corsProxyInput.value.trim() || 'https://corsproxy.io/?';
-  saveApiKeys();
-  toggleSettingsPanel();
-  updateApiKeyStatus();
-}
-
-// ── Event Listeners ──────────────────────────────────────────────────
-
 function setupEventListeners() {
   const analyzeBtn = document.getElementById('analyzeBtn');
   const tickerInput = document.getElementById('tickerInput');
   const settingsToggle = document.getElementById('settingsToggle');
   const settingsClose = document.getElementById('settingsClose');
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-  const testConnectionBtn = document.getElementById('testConnectionBtn');
   
   if (analyzeBtn) analyzeBtn.addEventListener('click', analyze);
   
   if (tickerInput) {
-    tickerInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') analyze();
-    });
-    tickerInput.addEventListener('input', (e) => {
-      tickerInput.value = e.target.value.toUpperCase();
-    });
+    tickerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') analyze(); });
+    tickerInput.addEventListener('input', (e) => { tickerInput.value = e.target.value.toUpperCase(); });
   }
   
   if (settingsToggle) settingsToggle.addEventListener('click', toggleSettingsPanel);
   if (settingsClose) settingsClose.addEventListener('click', toggleSettingsPanel);
   if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
-  if (testConnectionBtn) testConnectionBtn.addEventListener('click', testConnection);
+  
+  // Test buttons
+  const testFinnhubBtn = document.getElementById('testFinnhubBtn');
+  const testAlphaBtn = document.getElementById('testAlphaBtn');
+  const testMassiveBtn = document.getElementById('testMassiveBtn');
+  
+  if (testFinnhubBtn) testFinnhubBtn.addEventListener('click', () => testConnection('Finnhub'));
+  if (testAlphaBtn) testAlphaBtn.addEventListener('click', () => testConnection('Alpha'));
+  if (testMassiveBtn) testMassiveBtn.addEventListener('click', () => testConnection('Massive'));
 }
-
-// ── Initialize ───────────────────────────────────────────────────────
 
 function init() {
   loadApiKeys();
@@ -242,5 +202,4 @@ function init() {
   console.log('StageValuator initialized');
 }
 
-// Start when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
