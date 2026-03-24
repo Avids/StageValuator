@@ -8,6 +8,8 @@ const state = {
   error: null,
   apiKeys: {
     finnhub: '',
+    alphaVantage: '',
+    massive: '',  // YOUR MASSIVE API
     corsProxy: 'https://corsproxy.io/?'
   },
   sourceStatus: {},
@@ -21,31 +23,31 @@ const state = {
 const STAGES = {
   'early-stage': { 
     color: '#4ade80', 
-    bg: '#052e16', 
+    bg: '#c6f6d5', 
     label: 'Early-Stage',
     class: 'stage-early'
   },
   'growth': { 
-    color: '#34d399', 
-    bg: '#022c22', 
+    color: '#059669', 
+    bg: '#a7f3d0', 
     label: 'Growth',
     class: 'stage-growth'
   },
   'mature': { 
-    color: '#60a5fa', 
-    bg: '#1e3a5f', 
+    color: '#2563eb', 
+    bg: '#bfdbfe', 
     label: 'Mature',
     class: 'stage-mature'
   },
   'decline': { 
-    color: '#fbbf24', 
-    bg: '#3f2800', 
+    color: '#d97706', 
+    bg: '#fde68a', 
     label: 'Decline / Distressed',
     class: 'stage-decline'
   }
 };
 
-// ── Known Company Stages (for better accuracy) ───────────────────────
+// ── Known Company Stages ─────────────────────────────────────────────
 const KNOWN_STAGES = {
   'AAPL': 'mature', 'MSFT': 'mature', 'GOOGL': 'mature', 'META': 'mature',
   'AMZN': 'mature', 'NVDA': 'growth', 'TSLA': 'growth', 'PLTR': 'growth',
@@ -55,9 +57,9 @@ const KNOWN_STAGES = {
 
 // ── Rating Colors ────────────────────────────────────────────────────
 const RATING_COLORS = {
-  'Strong Buy': '#4ade80',
-  'Buy': '#86efac',
-  'Hold': '#fbbf24',
-  'Sell': '#f87171',
-  'Strong Sell': '#ef4444'
+  'Strong Buy': '#059669',
+  'Buy': '#10b981',
+  'Hold': '#d97706',
+  'Sell': '#dc2626',
+  'Strong Sell': '#b91c1c'
 };
