@@ -17,45 +17,65 @@ async function fetchFinnhubMetrics(ticker) {
     const metric = data.metric || {};
     updateSourceStatus(source, 'success');
     
-    // Helper function to format percentage correctly
-    const formatPercent = (value, decimals = 0) => {
+    // Better percentage formatter with range detection
+    const formatPercent = (value, decimals = 2) => {
       if (value === null || value === undefined || isNaN(value)) return null;
       const num = parseFloat(value);
-      // If value is already > 1, assume it's already in percentage form
-      // If value is <= 1, assume it's in decimal form and multiply by 100
-      const percentValue = num > 1 ? num : num * 100;
+      
+      // Detect if already in percentage form or decimal form
+      // Typical ranges:
+      // - ROE: -100% to +200% (as percentage) or -1.0 to 2.0 (as decimal)
+      // - Margins: -100% to +100% (as percentage) or -1.0 to 1.0 (as decimal)
+      
+      let percentValue;
+      if (Math.abs(num) <= 1.0) {
+        // Likely decimal form (e.g., 0.4325)
+        percentValue = num * 100;
+      } else if (Math.abs(num) > 100) {
+        // Likely already multiplied (e.g., 4325 instead of 43.25)
+        percentValue = num / 100;
+      } else {
+        // Already in percentage form (e.g., 43.25)
+        percentValue = num;
+      }
+      
       return `${percentValue.toFixed(decimals)}%`;
     };
     
-    // REAL financial metrics from Finnhub - with proper percentage formatting
+    // Format ratios (no percentage)
+    const formatRatio = (value, decimals = 2) => {
+      if (value === null || value === undefined || isNaN(value)) return null;
+      return parseFloat(value).toFixed(decimals);
+    };
+    
     return {
-      // Valuation Metrics (REAL)
-      peRatio: metric.peExclExtraCurrent || metric.peBasicExclExtraTTM || null,
-      evToEbitda: metric.evToEbitdaTTM || null,
-      evToRevenue: metric.evToSalesTTM || null,
-      priceToBook: metric.priceToBook || null,
-      priceToSales: metric.priceToSalesTTM || null,
+      // Valuation Metrics
+      peRatio: formatRatio(metric.peExclExtraCurrent || metric.peBasicExclExtraTTM),
+      evToEbitda: formatRatio(metric.evToEbitdaTTM),
+      evToRevenue: formatRatio(metric.evToSalesTTM),
+      priceToBook: formatRatio(metric.priceToBook),
+      priceToSales: formatRatio(metric.priceToSalesTTM),
       
-      // Profitability Metrics (REAL) - with proper percentage formatting
-      returnOnEquity: formatPercent(metric.roeTTM, 2),  // Fixed: 2 decimal places
+      // Profitability Metrics - with proper percentage handling
+      returnOnEquity: formatPercent(metric.roeTTM, 2),
       returnOnAssets: formatPercent(metric.roaTTM, 2),
       profitMargin: formatPercent(metric.netMarginTTM, 2),
       operatingMargin: formatPercent(metric.operMarginTTM, 2),
       grossMargin: formatPercent(metric.grossMarginTTM, 2),
       
-      // Dividend & Risk (REAL)
-      dividendYield: metric.dividendYieldIndicatedAnnual 
-        ? `${(metric.dividendYieldIndicatedAnnual * 100).toFixed(2)}%` 
+      // Dividend Yield (special handling - usually small decimal)
+      dividendYield: metric.dividendYieldIndicatedAnnual !== null && metric.dividendYieldIndicatedAnnual !== undefined
+        ? `${(parseFloat(metric.dividendYieldIndicatedAnnual) * 100).toFixed(2)}%`
         : 'None',
-      beta: metric.beta || null,
       
-      // Per Share Metrics (REAL)
-      eps: metric.epsTTM || null,
-      bookValuePerShare: metric.bookValuePerShareMRQ || null,
-      freeCashFlowPerShare: metric.freeCashFlowPerShareTTM || null,
-      revenuePerShare: metric.revenuePerShareTTM || null,
+      // Other metrics
+      beta: formatRatio(metric.beta, 2),
+      eps: metric.epsTTM ? `$${parseFloat(metric.epsTTM).toFixed(2)}` : null,
+      bookValuePerShare: metric.bookValuePerShareMRQ ? `$${parseFloat(metric.bookValuePerShareMRQ).toFixed(2)}` : null,
+      freeCashFlowPerShare: metric.freeCashFlowPerShareTTM ? `$${parseFloat(metric.freeCashFlowPerShareTTM).toFixed(2)}` : null,
+      revenuePerShare: metric.revenuePerShareTTM ? `$${parseFloat(metric.revenuePerShareTTM).toFixed(2)}` : null,
       
-      // Analyst Targets (REAL)
+      // Analyst Targets
       targetPriceMean: metric.targetPriceMean || null,
       targetPriceHigh: metric.targetPriceHigh || null,
       targetPriceLow: metric.targetPriceLow || null,
