@@ -9,7 +9,7 @@ const state = {
   apiKeys: {
     finnhub: '',
     alphaVantage: '',
-    massive: '',  // YOUR MASSIVE API
+    massive: '',  // ✓ Massive (Polygon) API key
     corsProxy: 'https://corsproxy.io/?'
   },
   sourceStatus: {},
