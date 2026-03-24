@@ -115,69 +115,39 @@
       margin-top: 8px;
     }
 
-    .api-config-section {
-      padding: 16px 30px;
-      max-width: 520px;
-    }
-
-    .api-config-container {
-      background: #0d1117;
-      border: 1px solid #1e2d3d;
-      border-radius: 6px;
-      padding: 14px 18px;
-    }
-
-    .api-config-title {
-      font-size: 11px;
-      color: #4a7fa5;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
-
-    .api-config-row {
+    .api-status-bar {
+      padding: 12px 30px;
       display: flex;
-      gap: 10px;
-      margin-bottom: 8px;
+      gap: 12px;
+      flex-wrap: wrap;
       align-items: center;
     }
 
-    .api-config-label {
+    .status-badge {
       font-size: 11px;
-      color: #6e7681;
-      min-width: 100px;
-    }
-
-    .api-config-input {
-      flex: 1;
-      background: #080c10;
-      border: 1px solid #1e2d3d;
+      padding: 4px 10px;
       border-radius: 4px;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-family: inherit;
-      color: #e6edf3;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .api-config-input::placeholder {
-      color: #3d5a73;
-    }
-
-    .api-status {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 3px;
-      min-width: 60px;
-      text-align: center;
-    }
-
-    .api-status.active {
+    .status-badge.connected {
       background: #052e16;
       color: #4ade80;
+      border: 1px solid #1a4a1a;
     }
 
-    .api-status.inactive {
+    .status-badge.disconnected {
       background: #1a0a0a;
       color: #f87171;
+      border: 1px solid #5a1a1a;
+    }
+
+    .status-badge.warning {
+      background: #1a1a0a;
+      color: #fbbf24;
+      border: 1px solid #3d3010;
     }
 
     .loading-section {
@@ -931,7 +901,7 @@
       position: fixed;
       bottom: 70px;
       right: 20px;
-      width: 400px;
+      width: 450px;
       background: #0d1117;
       border: 1px solid #1e2d3d;
       border-radius: 6px;
@@ -945,6 +915,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1e2d3d;
     }
 
     .api-settings-title {
@@ -977,6 +949,7 @@
       margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     .api-setting-input {
@@ -1026,6 +999,37 @@
     .save-settings-btn:hover {
       background: #2a4a6c;
     }
+
+    .test-connection-btn {
+      background: #052e16;
+      border: 1px solid #1a4a1a;
+      border-radius: 4px;
+      padding: 4px 10px;
+      color: #4ade80;
+      cursor: pointer;
+      font-size: 10px;
+      font-family: inherit;
+      margin-left: 8px;
+    }
+
+    .test-connection-btn:hover {
+      background: #0a3a20;
+    }
+
+    .test-connection-btn:disabled {
+      background: #1a1a1a;
+      color: #6e7681;
+      cursor: not-allowed;
+    }
+
+    .rate-limit-info {
+      font-size: 10px;
+      color: #6e7681;
+      margin-top: 8px;
+      padding: 8px;
+      background: #080c10;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -1033,7 +1037,7 @@
   <div class="header">
     <span class="header-subtitle">EQUITY RESEARCH</span>
     <span class="header-title">StageValuator</span>
-    <span class="header-badge">REAL MARKET DATA · AI ANALYSIS · EDUCATIONAL ONLY</span>
+    <span class="header-badge">FINNHUB API · REAL MARKET DATA · EDUCATIONAL ONLY</span>
   </div>
 
   <!-- Input Section -->
@@ -1044,31 +1048,24 @@
         type="text" 
         id="tickerInput" 
         class="input-field" 
-        placeholder="AAPL · NVDA · TSLA · SPOT"
+        placeholder="AAPL · NVDA · TSLA · MSFT"
         maxlength="10"
       />
       <button id="analyzeBtn" class="analyze-btn">ANALYZE →</button>
     </div>
-    <p class="input-hint">Live price from multiple sources · AI lifecycle classification · Multi-method valuation</p>
+    <p class="input-hint">Live price from Finnhub API · AI lifecycle classification · Multi-method valuation</p>
   </div>
 
-  <!-- API Config (Inline) -->
-  <div class="api-config-section">
-    <div class="api-config-container">
-      <div class="api-config-title">DATA SOURCES STATUS</div>
-      <div class="api-config-row">
-        <span class="api-config-label">Yahoo Finance</span>
-        <span id="yahooStatus" class="api-status inactive">Testing...</span>
-      </div>
-      <div class="api-config-row">
-        <span class="api-config-label">Finnhub</span>
-        <span id="finnhubStatus" class="api-status inactive">Needs API Key</span>
-      </div>
-      <div class="api-config-row">
-        <span class="api-config-label">Alpha Vantage</span>
-        <span id="alphaStatus" class="api-status inactive">Needs API Key</span>
-      </div>
-    </div>
+  <!-- API Status Bar -->
+  <div class="api-status-bar">
+    <span id="finnhubStatus" class="status-badge disconnected">
+      <span>●</span>
+      <span>Finnhub: Not Connected</span>
+    </span>
+    <span id="rateLimitStatus" class="status-badge warning hidden">
+      <span>⚠</span>
+      <span>Rate Limit: --/--</span>
+    </span>
   </div>
 
   <!-- Loading Section -->
@@ -1079,7 +1076,7 @@
         <div class="loading-dot"></div>
         <div class="loading-dot"></div>
       </div>
-      <span id="loadingText" class="loading-text">Fetching live price from the web…</span>
+      <span id="loadingText" class="loading-text">Fetching live price from Finnhub…</span>
       <span id="loadingTicker" class="loading-ticker"></span>
     </div>
     <div id="dataSourceStatus" class="data-source-status"></div>
@@ -1102,37 +1099,30 @@
   <!-- API Settings Panel -->
   <div id="apiSettingsPanel" class="api-settings-panel hidden">
     <div class="api-settings-header">
-      <span class="api-settings-title">API Configuration</span>
+      <span class="api-settings-title">🔑 Finnhub API Configuration</span>
       <button id="settingsClose" class="api-settings-close">×</button>
     </div>
     
     <div class="api-setting-item">
       <div class="api-setting-label">
         <span>Finnhub API Key</span>
-        <span id="finnhubKeyStatus" class="api-status inactive">Not Set</span>
+        <span id="finnhubKeyStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
       </div>
-      <input type="text" id="finnhubKeyInput" class="api-setting-input" placeholder="Enter your Finnhub API key" />
-      <div class="api-setting-note">Free tier: 60 calls/min · <a href="https://finnhub.io/register" target="_blank">Get free key</a></div>
+      <input type="password" id="finnhubKeyInput" class="api-setting-input" placeholder="Enter your Finnhub API key (e.g., abc123xyz)" />
+      <div class="api-setting-note">
+        🔗 <a href="https://finnhub.io/register" target="_blank">Get free API key</a> · 
+        <a href="https://finnhub.io/docs/api" target="_blank">API Documentation</a>
+      </div>
+      <button id="testConnectionBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test Connection</button>
+      <div id="testConnectionResult" class="api-setting-note hidden"></div>
     </div>
 
-    <div class="api-setting-item">
-      <div class="api-setting-label">
-        <span>Alpha Vantage API Key</span>
-        <span id="alphaKeyStatus" class="api-status inactive">Not Set</span>
-      </div>
-      <input type="text" id="alphaKeyInput" class="api-setting-input" placeholder="Enter your Alpha Vantage API key" />
-      <div class="api-setting-note">Free tier: 5 calls/min · <a href="https://www.alphavantage.co/support/#api-key" target="_blank">Get free key</a></div>
+    <div class="rate-limit-info">
+      <strong>Free Tier Limits:</strong> 60 API calls/minute · 30 calls/second<br>
+      <strong>Available Endpoints:</strong> Quote, Company Profile, Financial Metrics, Analyst Recommendations
     </div>
 
-    <div class="api-setting-item">
-      <div class="api-setting-label">
-        <span>CORS Proxy (Optional)</span>
-      </div>
-      <input type="text" id="corsProxyInput" class="api-setting-input" placeholder="https://corsproxy.io/?" value="https://corsproxy.io/?" />
-      <div class="api-setting-note">Used for Yahoo Finance requests to bypass CORS</div>
-    </div>
-
-    <button id="saveSettingsBtn" class="save-settings-btn">SAVE SETTINGS</button>
+    <button id="saveSettingsBtn" class="save-settings-btn">💾 SAVE SETTINGS</button>
   </div>
 
   <script>
@@ -1146,10 +1136,12 @@
       error: null,
       apiKeys: {
         finnhub: '',
-        alphaVantage: '',
-        corsProxy: 'https://corsproxy.io/?'
       },
-      sourceStatus: {}
+      sourceStatus: {},
+      rateLimit: {
+        used: 0,
+        limit: 60
+      }
     };
 
     // ── Load/Save API Keys from localStorage ─────────────────────────────
@@ -1171,19 +1163,22 @@
     }
 
     function updateApiKeyStatus() {
-      document.getElementById('finnhubKeyStatus').className = 
-        'api-status ' + (state.apiKeys.finnhub ? 'active' : 'inactive');
-      document.getElementById('finnhubKeyStatus').textContent = 
-        state.apiKeys.finnhub ? 'Configured' : 'Not Set';
+      const finnhubStatus = document.getElementById('finnhubStatus');
+      const finnhubKeyStatus = document.getElementById('finnhubKeyStatus');
       
-      document.getElementById('alphaKeyStatus').className = 
-        'api-status ' + (state.apiKeys.alphaVantage ? 'active' : 'inactive');
-      document.getElementById('alphaKeyStatus').textContent = 
-        state.apiKeys.alphaVantage ? 'Configured' : 'Not Set';
-
-      document.getElementById('finnhubKeyInput').value = state.apiKeys.finnhub;
-      document.getElementById('alphaKeyInput').value = state.apiKeys.alphaVantage;
-      document.getElementById('corsProxyInput').value = state.apiKeys.corsProxy;
+      if (state.apiKeys.finnhub) {
+        finnhubStatus.className = 'status-badge connected';
+        finnhubStatus.innerHTML = '<span>●</span><span>Finnhub: Connected</span>';
+        finnhubKeyStatus.className = 'status-badge connected';
+        finnhubKeyStatus.textContent = 'Configured';
+        document.getElementById('finnhubKeyInput').value = state.apiKeys.finnhub;
+      } else {
+        finnhubStatus.className = 'status-badge disconnected';
+        finnhubStatus.innerHTML = '<span>●</span><span>Finnhub: Not Connected</span>';
+        finnhubKeyStatus.className = 'status-badge disconnected';
+        finnhubKeyStatus.textContent = 'Not Set';
+        document.getElementById('finnhubKeyInput').value = '';
+      }
     }
 
     // ── Stage Configurations ─────────────────────────────────────────────
@@ -1214,172 +1209,56 @@
       }
     };
 
-    // ── Data Source Fetchers ─────────────────────────────────────────────
+    // ── Finnhub API Functions ────────────────────────────────────────────
     
-    // Yahoo Finance via CORS Proxy (No API Key Required)
-    async function fetchFromYahooFinance(ticker) {
-      const source = 'Yahoo Finance';
-      updateSourceStatus(source, 'pending');
-      
-      try {
-        const url = `${state.apiKeys.corsProxy}https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        
-        if (!data.chart?.result?.[0]) {
-          throw new Error('No data returned');
-        }
-        
-        const result = data.chart.result[0];
-        const meta = result.meta;
-        const quote = result.indicators?.quote?.[0];
-        
-        const currentPrice = meta.regularMarketPrice || quote.close?.[quote.close.length - 1];
-        const previousClose = meta.previousClose || quote.close?.[quote.close.length - 2];
-        
-        if (!currentPrice) throw new Error('No price data');
-        
-        const priceChange = previousClose ? (currentPrice - previousClose).toFixed(2) : 0;
-        const priceChangePercent = previousClose ? ((priceChange / previousClose) * 100).toFixed(2) : 0;
-        const priceChangeSign = priceChange >= 0 ? '+' : '';
-        
-        updateSourceStatus(source, 'success');
-        
-        return {
-          source: source,
-          currentPrice: parseFloat(currentPrice.toFixed(2)),
-          currency: meta.currency || 'USD',
-          priceChangeToday: `${priceChangeSign}${priceChange} (${priceChangeSign}${priceChangePercent}%)`,
-          weekHigh52: meta.fiftyTwoWeekHigh || null,
-          weekLow52: meta.fiftyTwoWeekLow || null,
-          marketCap: meta.marketCap ? formatMarketCap(meta.marketCap) : null,
-          exchange: meta.exchangeName || meta.exchange || 'NASDAQ',
-          priceTimestamp: new Date().toLocaleString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        };
-      } catch (error) {
-        updateSourceStatus(source, 'error');
-        console.warn('Yahoo Finance fetch failed:', error.message);
-        throw error;
-      }
-    }
-
-    // Finnhub API (Requires API Key)
-    async function fetchFromFinnhub(ticker) {
-      const source = 'Finnhub';
+    // Fetch Quote (Price, Change, etc.)
+    async function fetchFinnhubQuote(ticker) {
+      const source = 'Finnhub Quote';
       updateSourceStatus(source, 'pending');
       
       if (!state.apiKeys.finnhub) {
         updateSourceStatus(source, 'error');
-        throw new Error('API key not configured');
+        throw new Error('Finnhub API key not configured');
       }
       
       try {
-        // Get quote
-        const quoteUrl = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
-        const quoteResponse = await fetch(quoteUrl);
+        const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
+        const response = await fetch(url);
         
-        if (!quoteResponse.ok) throw new Error(`HTTP ${quoteResponse.status}`);
+        if (!response.ok) {
+          if (response.status === 429) {
+            throw new Error('Rate limit exceeded. Please wait a moment.');
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
         
-        const quote = await quoteResponse.json();
+        const data = await response.json();
         
-        if (quote.c === 0) throw new Error('Invalid ticker or market closed');
+        // Check for invalid ticker
+        if (data.c === 0 && data.h === 0 && data.l === 0) {
+          throw new Error('Invalid ticker or market closed');
+        }
         
-        // Get company profile
-        const profileUrl = `https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
-        const profileResponse = await fetch(profileUrl);
-        const profile = await profileResponse.json();
-        
-        // Get metrics
-        const metricsUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${state.apiKeys.finnhub}`;
-        const metricsResponse = await fetch(metricsUrl);
-        const metrics = await metricsResponse.json();
-        
-        const priceChange = quote.d?.toFixed(2) || 0;
-        const priceChangePercent = quote.dp?.toFixed(2) || 0;
+        const currentPrice = data.c;
+        const previousClose = data.pc;
+        const priceChange = (currentPrice - previousClose).toFixed(2);
+        const priceChangePercent = data.dp?.toFixed(2) || 0;
         const priceChangeSign = priceChange >= 0 ? '+' : '';
         
         updateSourceStatus(source, 'success');
-        
-        return {
-          source: source,
-          currentPrice: parseFloat(quote.c.toFixed(2)),
-          currency: 'USD',
-          priceChangeToday: `${priceChangeSign}${priceChange} (${priceChangeSign}${priceChangePercent}%)`,
-          weekHigh52: quote.h || null,
-          weekLow52: quote.l || null,
-          marketCap: profile?.marketCapitalization ? formatMarketCap(profile.marketCapitalization) : null,
-          exchange: profile?.exchange || 'NASDAQ',
-          companyName: profile?.name || null,
-          sector: profile?.finnhubIndustry || null,
-          peRatio: metrics?.metric?.peExclExtraCurrent || null,
-          priceTimestamp: new Date().toLocaleString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        };
-      } catch (error) {
-        updateSourceStatus(source, 'error');
-        console.warn('Finnhub fetch failed:', error.message);
-        throw error;
-      }
-    }
-
-    // Alpha Vantage API (Requires API Key)
-    async function fetchFromAlphaVantage(ticker) {
-      const source = 'Alpha Vantage';
-      updateSourceStatus(source, 'pending');
-      
-      if (!state.apiKeys.alphaVantage) {
-        updateSourceStatus(source, 'error');
-        throw new Error('API key not configured');
-      }
-      
-      try {
-        const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        const quote = data['Global Quote'];
-        
-        if (!quote || !quote['05. price']) {
-          throw new Error('No data returned or rate limit exceeded');
-        }
-        
-        const currentPrice = parseFloat(quote['05. price']);
-        const change = parseFloat(quote['09. change'] || 0);
-        const changePercent = quote['10. change percent']?.replace('%', '') || 0;
-        const changeSign = change >= 0 ? '+' : '';
-        
-        updateSourceStatus(source, 'success');
+        updateRateLimit(response.headers);
         
         return {
           source: source,
           currentPrice: parseFloat(currentPrice.toFixed(2)),
+          previousClose: previousClose,
           currency: 'USD',
-          priceChangeToday: `${changeSign}${change.toFixed(2)} (${changeSign}${changePercent}%)`,
-          weekHigh52: null, // Need separate call for this
-          weekLow52: null,
-          marketCap: null,
-          exchange: quote['07. latest trading day'] ? 'NYSE/NASDAQ' : null,
+          priceChangeToday: `${priceChangeSign}${priceChange} (${priceChangeSign}${priceChangePercent}%)`,
+          weekHigh52: data.h || null,
+          weekLow52: data.l || null,
+          openPrice: data.o,
+          highPrice: data.h,
+          lowPrice: data.l,
           priceTimestamp: new Date().toLocaleString('en-US', { 
             month: 'long', 
             day: 'numeric', 
@@ -1390,336 +1269,161 @@
         };
       } catch (error) {
         updateSourceStatus(source, 'error');
-        console.warn('Alpha Vantage fetch failed:', error.message);
+        console.warn('Finnhub Quote fetch failed:', error.message);
         throw error;
       }
     }
 
-    // Fallback: Mock Data Generator
-    function generateMockData(ticker) {
-      const companies = {
-        'AAPL': {
-          source: 'Mock Data (Fallback)',
-          name: 'Apple Inc.',
-          sector: 'Technology',
-          industry: 'Consumer Electronics',
-          exchange: 'NASDAQ',
-          stage: 'mature',
-          stageConfidence: 'high',
-          stageRationale: 'Apple shows stable 5-8% revenue growth, strong margins, consistent dividends, and massive installed base. Transitioning to services-heavy model.',
-          currentPrice: 178.52,
-          currency: 'USD',
-          priceChangeToday: '+2.34 (+1.33%)',
-          priceTimestamp: new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          weekHigh52: 199.62,
-          weekLow52: 164.08,
-          keyMetrics: {
-            revenueGrowthYoY: '~6%',
-            ebitdaMargin: '~33%',
-            netMargin: '~25%',
-            freeCashFlow: '~$99B TTM',
-            netDebt: 'Net cash ~$62B',
-            dividendYield: '~0.5%',
-            trailingPE: '~29x',
-            evToEbitda: '~23x',
-            returnOnEquity: '~147%',
-            beta: '~1.3'
-          },
-          analystTargets: {
-            low: 160.0,
-            mean: 195.0,
-            high: 240.0,
-            numberOfAnalysts: 45,
-            consensusRating: 'Buy'
-          },
-          valuationMethods: [
-            {
-              method: 'P/E Ratio',
-              applicability: 'primary',
-              fairValue: 185.0,
-              upDownside: '+3.6%',
-              assumptions: '28x NTM earnings, peer median for large-cap tech with services mix',
-              confidence: 'high'
-            },
-            {
-              method: 'DCF',
-              applicability: 'secondary',
-              fairValue: 190.0,
-              upDownside: '+6.4%',
-              assumptions: '8% FCF growth, 10% discount rate, 3% terminal growth',
-              confidence: 'medium'
-            }
-          ],
-          valuationSummary: {
-            bearCase: 145.0,
-            baseCase: 185.0,
-            bullCase: 220.0,
-            verdict: 'Apple trades near fair value. Strong ecosystem and services growth support current valuation, but hardware saturation limits upside. Hold for dividend income and stability.'
-          },
-          risks: [
-            'China market exposure and regulatory risks',
-            'iPhone replacement cycle lengthening',
-            'Services growth slowing as base matures',
-            'Antitrust scrutiny in multiple jurisdictions'
-          ]
-        },
-        'NVDA': {
-          source: 'Mock Data (Fallback)',
-          name: 'NVIDIA Corporation',
-          sector: 'Technology',
-          industry: 'Semiconductors',
-          exchange: 'NASDAQ',
-          stage: 'growth',
-          stageConfidence: 'high',
-          stageRationale: 'NVIDIA shows 100%+ revenue growth driven by AI/datacenter demand, expanding margins, dominant GPU market position, and massive TAM expansion in AI infrastructure.',
-          currentPrice: 875.28,
-          currency: 'USD',
-          priceChangeToday: '+15.42 (+1.79%)',
-          priceTimestamp: new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          weekHigh52: 974.00,
-          weekLow52: 394.50,
-          keyMetrics: {
-            revenueGrowthYoY: '~126%',
-            ebitdaMargin: '~55%',
-            netMargin: '~49%',
-            freeCashFlow: '~$28B TTM',
-            netDebt: 'Net cash ~$18B',
-            dividendYield: '~0.03%',
-            trailingPE: '~65x',
-            evToEbitda: '~58x',
-            returnOnEquity: '~98%',
-            beta: '~1.7'
-          },
-          analystTargets: {
-            low: 650.0,
-            mean: 950.0,
-            high: 1200.0,
-            numberOfAnalysts: 52,
-            consensusRating: 'Strong Buy'
-          },
-          valuationMethods: [
-            {
-              method: 'PEG Ratio',
-              applicability: 'primary',
-              fairValue: 920.0,
-              upDownside: '+5.1%',
-              assumptions: 'PEG of 0.5x given 100%+ growth, justified for AI infrastructure leader',
-              confidence: 'medium'
-            },
-            {
-              method: 'EV/Revenue',
-              applicability: 'secondary',
-              fairValue: 890.0,
-              upDownside: '+1.7%',
-              assumptions: '22x NTM revenue, premium to semi peers due to AI dominance',
-              confidence: 'medium'
-            }
-          ],
-          valuationSummary: {
-            bearCase: 550.0,
-            baseCase: 920.0,
-            bullCase: 1300.0,
-            verdict: 'NVIDIA commands premium valuation due to AI monopoly position. Near-term volatility expected, but long-term AI infrastructure buildout supports higher prices. Growth investors should hold.'
-          },
-          risks: [
-            'AI bubble concerns and potential demand slowdown',
-            'Competition from AMD, Intel, and custom AI chips',
-            'Export restrictions to China impacting revenue',
-            'Customer concentration risk (hyperscalers)'
-          ]
-        },
-        'TSLA': {
-          source: 'Mock Data (Fallback)',
-          name: 'Tesla, Inc.',
-          sector: 'Consumer Discretionary',
-          industry: 'Automobiles',
-          exchange: 'NASDAQ',
-          stage: 'growth',
-          stageConfidence: 'medium',
-          stageRationale: 'Tesla shows 20-30% revenue growth, expanding into energy storage and AI/robotics, but facing margin pressure from price cuts and increased EV competition.',
-          currentPrice: 175.34,
-          currency: 'USD',
-          priceChangeToday: '-3.21 (-1.80%)',
-          priceTimestamp: new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          weekHigh52: 299.29,
-          weekLow52: 138.80,
-          keyMetrics: {
-            revenueGrowthYoY: '~19%',
-            ebitdaMargin: '~17%',
-            netMargin: '~15%',
-            freeCashFlow: '~$4.5B TTM',
-            netDebt: 'Net cash ~$16B',
-            dividendYield: 'None',
-            trailingPE: '~45x',
-            evToEbitda: '~38x',
-            returnOnEquity: '~28%',
-            beta: '~2.0'
-          },
-          analystTargets: {
-            low: 85.0,
-            mean: 210.0,
-            high: 350.0,
-            numberOfAnalysts: 38,
-            consensusRating: 'Hold'
-          },
-          valuationMethods: [
-            {
-              method: 'Sum-of-Parts',
-              applicability: 'primary',
-              fairValue: 195.0,
-              upDownside: '+11.2%',
-              assumptions: 'Auto business 30x P/E, Energy 40x P/E, FSD/AI optionality $50B value',
-              confidence: 'low'
-            },
-            {
-              method: 'P/E Ratio',
-              applicability: 'secondary',
-              fairValue: 165.0,
-              upDownside: '-5.9%',
-              assumptions: '35x NTM earnings, premium to auto peers for tech/energy exposure',
-              confidence: 'medium'
-            }
-          ],
-          valuationSummary: {
-            bearCase: 90.0,
-            baseCase: 195.0,
-            bullCase: 380.0,
-            verdict: 'Tesla valuation highly dependent on FSD and AI promises. Auto business alone suggests overvaluation, but optionality in robotics/energy provides upside. High risk/reward.'
-          },
-          risks: [
-            'EV competition intensifying globally',
-            'Margin pressure from price cuts',
-            'FSD timeline and regulatory approval uncertainty',
-            'Key person risk (CEO dependency)'
-          ]
-        },
-        'SPOT': {
-          source: 'Mock Data (Fallback)',
-          name: 'Spotify Technology S.A.',
-          sector: 'Communication Services',
-          industry: 'Internet Content & Information',
-          exchange: 'NYSE',
-          stage: 'growth',
-          stageConfidence: 'high',
-          stageRationale: 'Spotify shows 15-20% revenue growth, recently turned profitable, heavy investment in podcasts and audiobooks, still expanding TAM globally.',
-          currentPrice: 474.54,
-          currency: 'USD',
-          priceChangeToday: '+3.21 (+0.68%)',
-          priceTimestamp: new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          weekHigh52: 498.00,
-          weekLow52: 195.00,
-          keyMetrics: {
-            revenueGrowthYoY: '~18%',
-            ebitdaMargin: '~8%',
-            netMargin: '~3%',
-            freeCashFlow: '~$1.8B TTM',
-            netDebt: 'Net cash ~$3B',
-            dividendYield: 'None',
-            trailingPE: '~120x',
-            evToRevenue: '~3.5x',
-            returnOnEquity: '~25%',
-            beta: '~1.6'
-          },
-          analystTargets: {
-            low: 380.0,
-            mean: 520.0,
-            high: 650.0,
-            numberOfAnalysts: 32,
-            consensusRating: 'Buy'
-          },
-          valuationMethods: [
-            {
-              method: 'EV/Revenue',
-              applicability: 'primary',
-              fairValue: 490.0,
-              upDownside: '+3.3%',
-              assumptions: '3.8x NTM revenue, peer median for scaled music/audio streaming platforms',
-              confidence: 'medium'
-            }
-          ],
-          valuationSummary: {
-            bearCase: 320.0,
-            baseCase: 490.0,
-            bullCase: 680.0,
-            verdict: 'Spotify trades near fair value with path to improved profitability. Podcast monetization and audiobook expansion provide upside. Competitive moat in music streaming is strong.'
-          },
-          risks: [
-            'Music licensing cost inflation',
-            'Competition from Apple Music, Amazon Music',
-            'Podcast monetization slower than expected',
-            'User growth saturation in developed markets'
-          ]
-        }
-      };
-
-      // Default for unknown tickers
-      const defaultData = {
-        source: 'Mock Data (Fallback)',
-        name: `${ticker} Corporation`,
-        sector: 'Technology',
-        industry: 'Software',
-        exchange: 'NASDAQ',
-        stage: 'growth',
-        stageConfidence: 'medium',
-        stageRationale: `Company shows moderate growth with expanding market presence. Financial metrics suggest healthy operations with room for improvement.`,
-        currentPrice: (Math.random() * 200 + 50).toFixed(2),
-        currency: 'USD',
-        priceChangeToday: (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 5).toFixed(2) + ' (' + (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 3).toFixed(2) + '%)',
-        priceTimestamp: new Date().toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        weekHigh52: (Math.random() * 100 + 200).toFixed(2),
-        weekLow52: (Math.random() * 50 + 100).toFixed(2),
-        keyMetrics: {
-          revenueGrowthYoY: '~' + (Math.random() * 30 + 5).toFixed(0) + '%',
-          ebitdaMargin: '~' + (Math.random() * 25 + 5).toFixed(0) + '%',
-          netMargin: '~' + (Math.random() * 15 + 2).toFixed(0) + '%',
-          freeCashFlow: '~$' + (Math.random() * 10 + 1).toFixed(1) + 'B TTM',
-          netDebt: 'Net cash ~$' + (Math.random() * 20 + 5).toFixed(0) + 'B',
-          dividendYield: Math.random() > 0.5 ? '~' + (Math.random() * 3 + 0.5).toFixed(1) + '%' : 'None',
-          trailingPE: '~' + (Math.random() * 40 + 15).toFixed(0) + 'x',
-          evToEbitda: '~' + (Math.random() * 20 + 10).toFixed(0) + 'x',
-          returnOnEquity: '~' + (Math.random() * 30 + 10).toFixed(0) + '%',
-          beta: '~' + (Math.random() * 1.5 + 0.8).toFixed(1)
-        },
-        analystTargets: {
-          low: (Math.random() * 100 + 100).toFixed(0),
-          mean: (Math.random() * 150 + 150).toFixed(0),
-          high: (Math.random() * 200 + 200).toFixed(0),
-          numberOfAnalysts: Math.floor(Math.random() * 30 + 15),
-          consensusRating: ['Strong Buy', 'Buy', 'Hold', 'Sell'][Math.floor(Math.random() * 4)]
-        },
-        valuationMethods: [
-          {
-            method: 'DCF',
-            applicability: 'primary',
-            fairValue: (Math.random() * 150 + 150).toFixed(0),
-            upDownside: (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 20).toFixed(1) + '%',
-            assumptions: 'Standard DCF with 10% discount rate, 3% terminal growth',
-            confidence: 'medium'
-          }
-        ],
-        valuationSummary: {
-          bearCase: (Math.random() * 80 + 80).toFixed(0),
-          baseCase: (Math.random() * 150 + 150).toFixed(0),
-          bullCase: (Math.random() * 250 + 250).toFixed(0),
-          verdict: `Valuation appears ${Math.random() > 0.5 ? 'reasonable' : 'stretched'} given current growth trajectory. Monitor key metrics for entry/exit points.`
-        },
-        risks: [
-          'Market competition intensifying',
-          'Regulatory changes potential impact',
-          'Economic downturn affecting demand'
-        ]
-      };
-
-      return companies[ticker] || defaultData;
+    // Fetch Company Profile
+    async function fetchFinnhubProfile(ticker) {
+      const source = 'Finnhub Profile';
+      updateSourceStatus(source, 'pending');
+      
+      if (!state.apiKeys.finnhub) {
+        updateSourceStatus(source, 'error');
+        return null;
+      }
+      
+      try {
+        const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        updateSourceStatus(source, 'success');
+        
+        return {
+          companyName: data.name || null,
+          sector: data.finnhubIndustry || null,
+          industry: data.finnsIndustry || null,
+          exchange: data.exchange || null,
+          country: data.country || null,
+          marketCap: data.marketCapitalization || null,
+          sharesOutstanding: data.shareOutstanding || null,
+          logo: data.logo || null,
+          phone: data.phone || null,
+          weburl: data.weburl || null,
+          description: data.description || null
+        };
+      } catch (error) {
+        updateSourceStatus(source, 'error');
+        console.warn('Finnhub Profile fetch failed:', error.message);
+        return null;
+      }
     }
 
-    // Helper: Format Market Cap
-    function formatMarketCap(value) {
-      if (!value) return null;
-      if (value >= 1e12) return '$' + (value / 1e12).toFixed(2) + 'T';
-      if (value >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
-      if (value >= 1e6) return '$' + (value / 1e6).toFixed(2) + 'M';
-      return '$' + value.toFixed(2);
+    // Fetch Financial Metrics
+    async function fetchFinnhubMetrics(ticker) {
+      const source = 'Finnhub Metrics';
+      updateSourceStatus(source, 'pending');
+      
+      if (!state.apiKeys.finnhub) {
+        updateSourceStatus(source, 'error');
+        return null;
+      }
+      
+      try {
+        const url = `https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${state.apiKeys.finnhub}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        const metric = data.metric || {};
+        updateSourceStatus(source, 'success');
+        
+        return {
+          peRatio: metric.peExclExtraCurrent || metric.peBasicExclExtraTTM || null,
+          evToEbitda: metric.evToEbitdaTTM || null,
+          evToRevenue: metric.evToSalesTTM || null,
+          priceToBook: metric.priceToBook || null,
+          returnOnEquity: metric.roeTTM ? (metric.roeTTM * 100).toFixed(0) + '%' : null,
+          returnOnAssets: metric.roaTTM ? (metric.roaTTM * 100).toFixed(0) + '%' : null,
+          profitMargin: metric.netMarginTTM ? (metric.netMarginTTM * 100).toFixed(0) + '%' : null,
+          operatingMargin: metric.operMarginTTM ? (metric.operMarginTTM * 100).toFixed(0) + '%' : null,
+          grossMargin: metric.grossMarginTTM ? (metric.grossMarginTTM * 100).toFixed(0) + '%' : null,
+          dividendYield: metric.dividendYieldIndicatedAnnual ? (metric.dividendYieldIndicatedAnnual * 100).toFixed(2) + '%' : 'None',
+          beta: metric.beta || null,
+          eps: metric.epsTTM || null,
+          bookValuePerShare: metric.bookValuePerShareMRQ || null,
+          freeCashFlowPerShare: metric.freeCashFlowPerShareTTM || null,
+          revenuePerShare: metric.revenuePerShareTTM || null,
+          targetPriceMean: metric.targetPriceMean || null,
+          targetPriceHigh: metric.targetPriceHigh || null,
+          targetPriceLow: metric.targetPriceLow || null,
+          targetPriceMedian: metric.targetPriceMedian || null,
+          recommendationMean: metric.recommendationMean || null,
+          numberOfAnalysts: metric.numberOfAnalyst || null
+        };
+      } catch (error) {
+        updateSourceStatus(source, 'error');
+        console.warn('Finnhub Metrics fetch failed:', error.message);
+        return null;
+      }
+    }
+
+    // Fetch Analyst Recommendations
+    async function fetchFinnhubRecommendations(ticker) {
+      const source = 'Finnhub Recommendations';
+      updateSourceStatus(source, 'pending');
+      
+      if (!state.apiKeys.finnhub) {
+        updateSourceStatus(source, 'error');
+        return null;
+      }
+      
+      try {
+        const url = `https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        updateSourceStatus(source, 'success');
+        
+        if (data && data.length > 0) {
+          const latest = data[0];
+          const total = (latest.buy || 0) + (latest.hold || 0) + (latest.sell || 0);
+          const buyPercent = total > 0 ? ((latest.buy || 0) / total * 100) : 0;
+          
+          let consensusRating = 'Hold';
+          if (buyPercent >= 60) consensusRating = 'Strong Buy';
+          else if (buyPercent >= 40) consensusRating = 'Buy';
+          else if (buyPercent <= 20) consensusRating = 'Sell';
+          
+          return {
+            consensusRating: consensusRating,
+            numberOfAnalysts: total,
+            buyCount: latest.buy || 0,
+            holdCount: latest.hold || 0,
+            sellCount: latest.sell || 0,
+            period: latest.period || ''
+          };
+        }
+        
+        return null;
+      } catch (error) {
+        updateSourceStatus(source, 'error');
+        console.warn('Finnhub Recommendations fetch failed:', error.message);
+        return null;
+      }
+    }
+
+    // Update Rate Limit Display
+    function updateRateLimit(headers) {
+      const remaining = headers.get('X-RateLimit-Remaining');
+      const limit = headers.get('X-RateLimit-Limit');
+      
+      if (remaining && limit) {
+        state.rateLimit.used = parseInt(limit) - parseInt(remaining);
+        state.rateLimit.limit = parseInt(limit);
+        
+        const rateLimitStatus = document.getElementById('rateLimitStatus');
+        rateLimitStatus.className = 'status-badge ' + (state.rateLimit.used > 50 ? 'warning' : 'connected');
+        rateLimitStatus.innerHTML = `<span>⚠</span><span>Rate Limit: ${state.rateLimit.used}/${state.rateLimit.limit}</span>`;
+        rateLimitStatus.classList.remove('hidden');
+      }
     }
 
     // Update Source Status Display
@@ -1737,73 +1441,147 @@
       container.innerHTML = badges;
     }
 
-    // ── Fetch from Multiple Sources with Fallback ────────────────────────
-    async function fetchPriceData(ticker) {
-      const sources = [];
+    // ── Fetch All Data from Finnhub ──────────────────────────────────────
+    async function fetchAllFinnhubData(ticker) {
+      // Fetch all endpoints in parallel for speed
+      const [quote, profile, metrics, recommendations] = await Promise.all([
+        fetchFinnhubQuote(ticker),
+        fetchFinnhubProfile(ticker),
+        fetchFinnhubMetrics(ticker),
+        fetchFinnhubRecommendations(ticker)
+      ]);
       
-      // Try Yahoo Finance first (no API key needed)
-      sources.push({
-        name: 'Yahoo Finance',
-        fetch: () => fetchFromYahooFinance(ticker)
-      });
+      // Combine all data
+      const combined = {
+        ...quote,
+        companyName: profile?.companyName || `${ticker} Corporation`,
+        sector: profile?.sector || 'Technology',
+        industry: profile?.industry || 'Software',
+        exchange: profile?.exchange || quote?.exchange || 'NASDAQ',
+        country: profile?.country || 'United States',
+        marketCap: profile?.marketCap ? formatMarketCap(profile.marketCap) : null,
+        description: profile?.description || null,
+        peRatio: metrics?.peRatio,
+        evToEbitda: metrics?.evToEbitda,
+        evToRevenue: metrics?.evToRevenue,
+        returnOnEquity: metrics?.returnOnEquity,
+        dividendYield: metrics?.dividendYield,
+        beta: metrics?.beta,
+        targetPriceMean: metrics?.targetPriceMean,
+        targetPriceHigh: metrics?.targetPriceHigh,
+        targetPriceLow: metrics?.targetPriceLow,
+        numberOfAnalysts: metrics?.numberOfAnalysts || recommendations?.numberOfAnalysts,
+        consensusRating: recommendations?.consensusRating || 'Hold',
+        dataSource: 'Finnhub API'
+      };
       
-      // Try Finnhub if API key configured
-      if (state.apiKeys.finnhub) {
-        sources.push({
-          name: 'Finnhub',
-          fetch: () => fetchFromFinnhub(ticker)
-        });
-      }
-      
-      // Try Alpha Vantage if API key configured
-      if (state.apiKeys.alphaVantage) {
-        sources.push({
-          name: 'Alpha Vantage',
-          fetch: () => fetchFromAlphaVantage(ticker)
-        });
-      }
-      
-      // Try sources in order, return first successful
-      for (const source of sources) {
-        try {
-          const data = await source.fetch();
-          data.dataSource = source.name;
-          return data;
-        } catch (error) {
-          console.warn(`${source.name} failed:`, error.message);
-          // Continue to next source
-        }
-      }
-      
-      // All sources failed - use mock data
-      console.log('All sources failed, using mock data');
-      const mockData = generateMockData(ticker);
-      mockData.dataSource = 'Mock Data (Fallback)';
-      return mockData;
+      return combined;
     }
 
-    // ── Determine Company Stage Based on Metrics ─────────────────────────
+    // Fallback: Mock Data Generator
+    function generateMockData(ticker) {
+      const companies = {
+        'AAPL': {
+          source: 'Mock Data (Fallback)',
+          name: 'Apple Inc.',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+          exchange: 'NASDAQ',
+          currentPrice: 178.52,
+          currency: 'USD',
+          priceChangeToday: '+2.34 (+1.33%)',
+          weekHigh52: 199.62,
+          weekLow52: 164.08,
+          peRatio: 29,
+          dividendYield: '~0.5%',
+          beta: 1.3
+        },
+        'NVDA': {
+          source: 'Mock Data (Fallback)',
+          name: 'NVIDIA Corporation',
+          sector: 'Technology',
+          industry: 'Semiconductors',
+          exchange: 'NASDAQ',
+          currentPrice: 875.28,
+          currency: 'USD',
+          priceChangeToday: '+15.42 (+1.79%)',
+          weekHigh52: 974.00,
+          weekLow52: 394.50,
+          peRatio: 65,
+          dividendYield: '~0.03%',
+          beta: 1.7
+        },
+        'TSLA': {
+          source: 'Mock Data (Fallback)',
+          name: 'Tesla, Inc.',
+          sector: 'Consumer Discretionary',
+          industry: 'Automobiles',
+          exchange: 'NASDAQ',
+          currentPrice: 175.34,
+          currency: 'USD',
+          priceChangeToday: '-3.21 (-1.80%)',
+          weekHigh52: 299.29,
+          weekLow52: 138.80,
+          peRatio: 45,
+          dividendYield: 'None',
+          beta: 2.0
+        },
+        'MSFT': {
+          source: 'Mock Data (Fallback)',
+          name: 'Microsoft Corporation',
+          sector: 'Technology',
+          industry: 'Software',
+          exchange: 'NASDAQ',
+          currentPrice: 415.50,
+          currency: 'USD',
+          priceChangeToday: '+5.20 (+1.27%)',
+          weekHigh52: 468.35,
+          weekLow52: 309.45,
+          peRatio: 35,
+          dividendYield: '~0.7%',
+          beta: 0.9
+        }
+      };
+
+      const defaultData = {
+        source: 'Mock Data (Fallback)',
+        name: `${ticker} Corporation`,
+        sector: 'Technology',
+        industry: 'Software',
+        exchange: 'NASDAQ',
+        currentPrice: (Math.random() * 200 + 50).toFixed(2),
+        currency: 'USD',
+        priceChangeToday: (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 5).toFixed(2) + ' (' + (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 3).toFixed(2) + '%)',
+        weekHigh52: (Math.random() * 100 + 200).toFixed(2),
+        weekLow52: (Math.random() * 50 + 100).toFixed(2),
+        peRatio: Math.floor(Math.random() * 40 + 15),
+        dividendYield: Math.random() > 0.5 ? '~' + (Math.random() * 3 + 0.5).toFixed(1) + '%' : 'None',
+        beta: (Math.random() * 1.5 + 0.8).toFixed(1)
+      };
+
+      return companies[ticker] || defaultData;
+    }
+
+    // Helper: Format Market Cap
+    function formatMarketCap(value) {
+      if (!value) return null;
+      if (value >= 1e12) return '$' + (value / 1e12).toFixed(2) + 'T';
+      if (value >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
+      if (value >= 1e6) return '$' + (value / 1e6).toFixed(2) + 'M';
+      return '$' + value.toFixed(2);
+    }
+
+    // ── Determine Company Stage ──────────────────────────────────────────
     function determineStage(priceData) {
-      // Simple heuristic based on available data
       const pe = priceData.peRatio || 0;
       const priceChange = priceData.priceChangeToday || '';
       const isPositive = priceChange.includes('+');
       
-      // Known companies with predefined stages
       const knownStages = {
-        'AAPL': 'mature',
-        'NVDA': 'growth',
-        'TSLA': 'growth',
-        'SPOT': 'growth',
-        'MSFT': 'mature',
-        'GOOGL': 'mature',
-        'AMZN': 'mature',
-        'META': 'mature',
-        'PLTR': 'growth',
-        'SNOW': 'early-stage',
-        'RBLX': 'early-stage',
-        'UBER': 'growth',
-        'LYFT': 'growth'
+        'AAPL': 'mature', 'MSFT': 'mature', 'GOOGL': 'mature',
+        'NVDA': 'growth', 'TSLA': 'growth', 'META': 'mature',
+        'AMZN': 'mature', 'PLTR': 'growth', 'SNOW': 'early-stage',
+        'RBLX': 'early-stage', 'UBER': 'growth', 'COIN': 'growth'
       };
       
       if (knownStages[priceData.ticker]) {
@@ -1814,7 +1592,6 @@
         };
       }
       
-      // Fallback heuristic
       if (pe > 50 || pe === 0) {
         return {
           stage: 'early-stage',
@@ -1857,7 +1634,6 @@
       const stage = determineStage(priceData);
       const curr = priceData.currentPrice;
       
-      // Generate valuation methods based on stage
       const valuationMethods = [];
       
       if (stage.stage === 'mature') {
@@ -1914,16 +1690,14 @@
         });
       }
       
-      // Generate analyst targets
       const analystTargets = {
-        low: (curr * 0.75).toFixed(2),
-        mean: (curr * 1.10).toFixed(2),
-        high: (curr * 1.40).toFixed(2),
-        numberOfAnalysts: Math.floor(Math.random() * 30 + 15),
-        consensusRating: ['Strong Buy', 'Buy', 'Hold', 'Sell'][Math.floor(Math.random() * 3) + 1]
+        low: priceData.targetPriceLow || (curr * 0.75).toFixed(2),
+        mean: priceData.targetPriceMean || (curr * 1.10).toFixed(2),
+        high: priceData.targetPriceHigh || (curr * 1.40).toFixed(2),
+        numberOfAnalysts: priceData.numberOfAnalysts || Math.floor(Math.random() * 30 + 15),
+        consensusRating: priceData.consensusRating || ['Strong Buy', 'Buy', 'Hold', 'Sell'][Math.floor(Math.random() * 3) + 1]
       };
       
-      // Generate valuation summary
       const bearCase = (curr * 0.70).toFixed(2);
       const baseCase = (curr * 1.05).toFixed(2);
       const bullCase = (curr * 1.50).toFixed(2);
@@ -1957,7 +1731,7 @@
         },
         risks: generateRisks(stage.stage),
         dataSource: priceData.dataSource || 'Multiple sources',
-        disclaimer: `Price data from ${priceData.dataSource || 'web sources'}. Valuation analysis is AI-generated — not investment advice.`,
+        disclaimer: `Price data from ${priceData.dataSource || 'Finnhub API'}. Valuation analysis is AI-generated — not investment advice.`,
         isLivePrice: priceData.source !== 'Mock Data (Fallback)',
         priceChangeToday: priceData.priceChangeToday,
         priceTimestamp: priceData.priceTimestamp,
@@ -1974,11 +1748,11 @@
           netMargin: '~' + (Math.random() * 10 - 8).toFixed(0) + '%',
           freeCashFlow: '~$' + (Math.random() * 2).toFixed(1) + 'B TTM',
           netDebt: 'Net cash ~$' + (Math.random() * 10 + 1).toFixed(0) + 'B',
-          dividendYield: 'None',
+          dividendYield: priceData.dividendYield || 'None',
           trailingPE: priceData.peRatio ? '~' + priceData.peRatio.toFixed(0) + 'x' : 'N/A',
           evToRevenue: '~' + (Math.random() * 10 + 5).toFixed(1) + 'x',
           returnOnEquity: '~' + (Math.random() * 20 - 10).toFixed(0) + '%',
-          beta: '~' + (Math.random() * 1 + 1.5).toFixed(1)
+          beta: priceData.beta || '~' + (Math.random() * 1 + 1.5).toFixed(1)
         },
         'growth': {
           revenueGrowthYoY: '~' + (Math.random() * 20 + 15).toFixed(0) + '%',
@@ -1986,11 +1760,11 @@
           netMargin: '~' + (Math.random() * 10 + 5).toFixed(0) + '%',
           freeCashFlow: '~$' + (Math.random() * 20 + 5).toFixed(1) + 'B TTM',
           netDebt: 'Net cash ~$' + (Math.random() * 30 + 10).toFixed(0) + 'B',
-          dividendYield: Math.random() > 0.7 ? '~' + (Math.random() * 1 + 0.3).toFixed(1) + '%' : 'None',
+          dividendYield: priceData.dividendYield || 'None',
           trailingPE: priceData.peRatio ? '~' + priceData.peRatio.toFixed(0) + 'x' : '~' + (Math.random() * 30 + 25).toFixed(0) + 'x',
-          evToEbitda: '~' + (Math.random() * 15 + 15).toFixed(0) + 'x',
-          returnOnEquity: '~' + (Math.random() * 20 + 15).toFixed(0) + '%',
-          beta: '~' + (Math.random() * 0.8 + 1.2).toFixed(1)
+          evToEbitda: priceData.evToEbitda ? '~' + priceData.evToEbitda.toFixed(0) + 'x' : '~' + (Math.random() * 15 + 15).toFixed(0) + 'x',
+          returnOnEquity: priceData.returnOnEquity || '~' + (Math.random() * 20 + 15).toFixed(0) + '%',
+          beta: priceData.beta || '~' + (Math.random() * 0.8 + 1.2).toFixed(1)
         },
         'mature': {
           revenueGrowthYoY: '~' + (Math.random() * 8 + 3).toFixed(0) + '%',
@@ -1998,11 +1772,11 @@
           netMargin: '~' + (Math.random() * 10 + 15).toFixed(0) + '%',
           freeCashFlow: '~$' + (Math.random() * 50 + 30).toFixed(1) + 'B TTM',
           netDebt: 'Net cash ~$' + (Math.random() * 50 + 20).toFixed(0) + 'B',
-          dividendYield: '~' + (Math.random() * 2 + 0.5).toFixed(1) + '%',
+          dividendYield: priceData.dividendYield || '~' + (Math.random() * 2 + 0.5).toFixed(1) + '%',
           trailingPE: priceData.peRatio ? '~' + priceData.peRatio.toFixed(0) + 'x' : '~' + (Math.random() * 10 + 15).toFixed(0) + 'x',
-          evToEbitda: '~' + (Math.random() * 8 + 10).toFixed(0) + 'x',
-          returnOnEquity: '~' + (Math.random() * 30 + 20).toFixed(0) + '%',
-          beta: '~' + (Math.random() * 0.5 + 0.8).toFixed(1)
+          evToEbitda: priceData.evToEbitda ? '~' + priceData.evToEbitda.toFixed(0) + 'x' : '~' + (Math.random() * 8 + 10).toFixed(0) + 'x',
+          returnOnEquity: priceData.returnOnEquity || '~' + (Math.random() * 30 + 20).toFixed(0) + '%',
+          beta: priceData.beta || '~' + (Math.random() * 0.5 + 0.8).toFixed(1)
         },
         'decline': {
           revenueGrowthYoY: '~-' + (Math.random() * 10 + 2).toFixed(0) + '%',
@@ -2010,11 +1784,11 @@
           netMargin: '~' + (Math.random() * 5 + 2).toFixed(0) + '%',
           freeCashFlow: '~$' + (Math.random() * 10 + 2).toFixed(1) + 'B TTM',
           netDebt: 'Net debt ~$' + (Math.random() * 30 + 10).toFixed(0) + 'B',
-          dividendYield: Math.random() > 0.5 ? '~' + (Math.random() * 4 + 2).toFixed(1) + '%' : 'Suspended',
+          dividendYield: priceData.dividendYield || (Math.random() > 0.5 ? '~' + (Math.random() * 4 + 2).toFixed(1) + '%' : 'Suspended'),
           trailingPE: priceData.peRatio ? '~' + priceData.peRatio.toFixed(0) + 'x' : '~' + (Math.random() * 8 + 5).toFixed(0) + 'x',
-          evToEbitda: '~' + (Math.random() * 5 + 4).toFixed(0) + 'x',
-          returnOnEquity: '~' + (Math.random() * 10 + 5).toFixed(0) + '%',
-          beta: '~' + (Math.random() * 0.5 + 1).toFixed(1)
+          evToEbitda: priceData.evToEbitda ? '~' + priceData.evToEbitda.toFixed(0) + 'x' : '~' + (Math.random() * 5 + 4).toFixed(0) + 'x',
+          returnOnEquity: priceData.returnOnEquity || '~' + (Math.random() * 10 + 5).toFixed(0) + '%',
+          beta: priceData.beta || '~' + (Math.random() * 0.5 + 1).toFixed(1)
         }
       };
       
@@ -2068,6 +1842,8 @@
     const apiSettingsPanel = document.getElementById('apiSettingsPanel');
     const settingsClose = document.getElementById('settingsClose');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const testConnectionBtn = document.getElementById('testConnectionBtn');
+    const testConnectionResult = document.getElementById('testConnectionResult');
 
     // ── Helper Functions ─────────────────────────────────────────────────
     function setPhase(phase) {
@@ -2153,7 +1929,6 @@
       const upsideSign = at.mean > curr ? '+ ' : '';
 
       return `
-        <!-- Company Header -->
         <div class="company-header">
           <div class="company-info">
             <div class="company-meta">
@@ -2162,7 +1937,6 @@
             <div class="company-name">${result.companyName || result.name}</div>
             
             <div class="price-container">
-              <!-- Price Badge -->
               <div class="price-badge ${priceBadgeClass}">
                 <div>
                   <div class="price-label ${priceLabelClass}">
@@ -2180,7 +1954,6 @@
                 </div>
               </div>
 
-              <!-- 52-Week Range -->
               ${(result.weekHigh52 || result.weekLow52) ? `
                 <div class="week-range-badge">
                   <div class="week-range-label">52-WEEK RANGE</div>
@@ -2198,20 +1971,18 @@
                 </div>
               ` : ''}
 
-              <!-- Data Source Badge -->
               <div class="data-source-badge ${dataSourceBadgeClass}">
                 <div class="data-source-label ${dataSourceLabelClass}">
                   ${isLivePrice ? '✓ DATA SOURCE' : '⚠ DATA SOURCE'}
                 </div>
                 <div class="data-source-text ${dataSourceTextClass}">
-                  ${isLivePrice ? `Price: ${result.dataSource || 'Live web search'}` : 'Price: AI knowledge (stale)'}
+                  ${isLivePrice ? `Price: ${result.dataSource || 'Finnhub API'}` : 'Price: AI knowledge (stale)'}
                 </div>
                 <div class="data-source-subtext">Financials: AI estimates</div>
               </div>
             </div>
           </div>
 
-          <!-- Stage Badge -->
           <div class="stage-badge ${stage.class}">
             <div class="stage-label">LIFECYCLE STAGE</div>
             <div class="stage-value" style="color: ${stage.color}">${stage.label}</div>
@@ -2219,12 +1990,10 @@
           </div>
         </div>
 
-        <!-- Stage Rationale -->
         <div class="stage-rationale" style="border-left-color: ${stage.color}">
           <span class="stage-rationale-label">STAGE RATIONALE</span> ${result.stageRationale}
         </div>
 
-        <!-- Key Metrics -->
         <div>
           <div class="section-label">KEY METRICS (AI ESTIMATES)</div>
           <div class="metrics-grid">
@@ -2241,7 +2010,6 @@
           </div>
         </div>
 
-        <!-- Analyst Targets -->
         ${at.mean ? `
           <div>
             <div class="section-label">ANALYST PRICE TARGETS</div>
@@ -2273,7 +2041,6 @@
           </div>
         ` : ''}
 
-        <!-- Valuation Methods -->
         <div>
           <div class="section-label">VALUATION MODELS</div>
           <div class="valuation-methods">
@@ -2303,7 +2070,6 @@
           </div>
         </div>
 
-        <!-- Football Field -->
         <div>
           <div class="section-label">VALUATION RANGE</div>
           <div class="football-field">
@@ -2325,7 +2091,6 @@
           </div>
         </div>
 
-        <!-- Risks -->
         ${(result.risks || []).length > 0 ? `
           <div>
             <div class="section-label">KEY RISKS</div>
@@ -2339,11 +2104,51 @@
           </div>
         ` : ''}
 
-        <!-- Disclaimer -->
         <div class="disclaimer">
-          ⚠ ${result.disclaimer || 'Live price from web search. Financials and valuation are AI estimates — not investment advice.'}
+          ⚠ ${result.disclaimer || 'Live price from Finnhub API. Financials and valuation are AI estimates — not investment advice.'}
         </div>
       `;
+    }
+
+    // ── Test API Connection ──────────────────────────────────────────────
+    async function testConnection() {
+      const apiKey = document.getElementById('finnhubKeyInput').value.trim();
+      const resultDiv = document.getElementById('testConnectionResult');
+      
+      if (!apiKey) {
+        resultDiv.textContent = '❌ Please enter an API key first';
+        resultDiv.style.color = '#f87171';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+      
+      testConnectionBtn.disabled = true;
+      testConnectionBtn.textContent = '⏳ Testing...';
+      
+      try {
+        const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${apiKey}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.c !== 0) {
+            resultDiv.textContent = '✅ Connection successful! AAPL: $' + data.c;
+            resultDiv.style.color = '#4ade80';
+          } else {
+            resultDiv.textContent = '⚠ API key valid but market may be closed';
+            resultDiv.style.color = '#fbbf24';
+          }
+        } else {
+          resultDiv.textContent = '❌ Connection failed: ' + response.status;
+          resultDiv.style.color = '#f87171';
+        }
+      } catch (error) {
+        resultDiv.textContent = '❌ Connection failed: ' + error.message;
+        resultDiv.style.color = '#f87171';
+      } finally {
+        testConnectionBtn.disabled = false;
+        testConnectionBtn.textContent = '🧪 Test Connection';
+        resultDiv.classList.remove('hidden');
+      }
     }
 
     // ── Main Analysis Function ───────────────────────────────────────────
@@ -2358,20 +2163,34 @@
       state.sourceStatus = {};
 
       try {
-        // Phase 1: Fetch live price from multiple sources
-        setPhase('Fetching live price from multiple sources…');
+        setPhase('Fetching live price from Finnhub…');
         loadingTicker.textContent = ticker;
         
-        const priceData = await fetchPriceData(ticker);
-        priceData.ticker = ticker;
+        let priceData;
+        
+        // Try Finnhub first if API key configured
+        if (state.apiKeys.finnhub) {
+          try {
+            priceData = await fetchAllFinnhubData(ticker);
+            priceData.ticker = ticker;
+            priceData.dataSource = 'Finnhub API';
+          } catch (e) {
+            console.warn('Finnhub failed, using fallback:', e.message);
+            priceData = generateMockData(ticker);
+            priceData.ticker = ticker;
+          }
+        } else {
+          // No API key - use mock data
+          priceData = generateMockData(ticker);
+          priceData.ticker = ticker;
+          priceData.dataSource = 'Mock Data (No API Key)';
+        }
         
         state.livePrice = priceData;
         showLivePrice(priceData);
 
-        // Phase 2: Generate full analysis
         setPhase('Running valuation analysis…');
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         const analysis = generateValuationAnalysis(priceData);
         state.result = analysis;
@@ -2394,22 +2213,9 @@
 
     function saveSettings() {
       state.apiKeys.finnhub = document.getElementById('finnhubKeyInput').value.trim();
-      state.apiKeys.alphaVantage = document.getElementById('alphaKeyInput').value.trim();
-      state.apiKeys.corsProxy = document.getElementById('corsProxyInput').value.trim();
-      
       saveApiKeys();
       toggleSettingsPanel();
-      
-      // Update status indicators
-      document.getElementById('finnhubStatus').className = 
-        'api-status ' + (state.apiKeys.finnhub ? 'active' : 'inactive');
-      document.getElementById('finnhubStatus').textContent = 
-        state.apiKeys.finnhub ? 'Configured' : 'Needs API Key';
-      
-      document.getElementById('alphaStatus').className = 
-        'api-status ' + (state.apiKeys.alphaVantage ? 'active' : 'inactive');
-      document.getElementById('alphaStatus').textContent = 
-        state.apiKeys.alphaVantage ? 'Configured' : 'Needs API Key';
+      updateApiKeyStatus();
     }
 
     // ── Event Listeners ──────────────────────────────────────────────────
@@ -2428,6 +2234,7 @@
     settingsToggle.addEventListener('click', toggleSettingsPanel);
     settingsClose.addEventListener('click', toggleSettingsPanel);
     saveSettingsBtn.addEventListener('click', saveSettings);
+    testConnectionBtn.addEventListener('click', testConnection);
 
     // ── Initialize ───────────────────────────────────────────────────────
     loadApiKeys();
