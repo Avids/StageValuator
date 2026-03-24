@@ -80,7 +80,8 @@ async function fetchFinnhubProfile(ticker) {
       exchange: data.exchange || null,
       country: data.country || null,
       marketCap: data.marketCapitalization || null,
-      description: data.description || null
+      description: data.description || null,
+      sharesOutstanding: data.shareOutstanding || null
     };
   } catch (error) {
     updateSourceStatus(source, 'error');
@@ -107,7 +108,7 @@ async function fetchFinnhubMetrics(ticker) {
     const metric = data.metric || {};
     updateSourceStatus(source, 'success');
     
-    // Better percentage formatter with range detection
+    // Smart percentage formatter with range detection
     const formatPercent = (value, decimals = 2) => {
       if (value === null || value === undefined || isNaN(value)) return null;
       const num = parseFloat(value);
@@ -132,25 +133,49 @@ async function fetchFinnhubMetrics(ticker) {
       return parseFloat(value).toFixed(decimals);
     };
     
+    // Calculate FCF Yield if data available
+    const calculateFCFYield = () => {
+      const fcfPerShare = metric.freeCashFlowPerShareTTM;
+      const currentPrice = metric.priceLastClose || metric.price;
+      
+      if (fcfPerShare && currentPrice && currentPrice > 0) {
+        const fcfYield = (fcfPerShare / currentPrice) * 100;
+        return `${fcfYield.toFixed(2)}%`;
+      }
+      return null;
+    };
+    
     return {
+      // Valuation Metrics
       peRatio: formatRatio(metric.peExclExtraCurrent || metric.peBasicExclExtraTTM),
       evToEbitda: formatRatio(metric.evToEbitdaTTM),
       evToRevenue: formatRatio(metric.evToSalesTTM),
       priceToBook: formatRatio(metric.priceToBook),
       priceToSales: formatRatio(metric.priceToSalesTTM),
+      
+      // Profitability Metrics
       returnOnEquity: formatPercent(metric.roeTTM, 2),
       returnOnAssets: formatPercent(metric.roaTTM, 2),
       profitMargin: formatPercent(metric.netMarginTTM, 2),
       operatingMargin: formatPercent(metric.operMarginTTM, 2),
       grossMargin: formatPercent(metric.grossMarginTTM, 2),
+      
+      // Dividend Yield - FIXED: properly handle percentage
       dividendYield: metric.dividendYieldIndicatedAnnual !== null && metric.dividendYieldIndicatedAnnual !== undefined
-        ? `${(parseFloat(metric.dividendYieldIndicatedAnnual) * 100).toFixed(2)}%`
+        ? formatPercent(metric.dividendYieldIndicatedAnnual, 2)
         : 'None',
+      
+      // NEW: FCF Yield
+      fcfYield: calculateFCFYield(),
+      
+      // Other metrics
       beta: formatRatio(metric.beta, 2),
       eps: metric.epsTTM ? `$${parseFloat(metric.epsTTM).toFixed(2)}` : null,
       bookValuePerShare: metric.bookValuePerShareMRQ ? `$${parseFloat(metric.bookValuePerShareMRQ).toFixed(2)}` : null,
       freeCashFlowPerShare: metric.freeCashFlowPerShareTTM ? `$${parseFloat(metric.freeCashFlowPerShareTTM).toFixed(2)}` : null,
       revenuePerShare: metric.revenuePerShareTTM ? `$${parseFloat(metric.revenuePerShareTTM).toFixed(2)}` : null,
+      
+      // Analyst Targets
       targetPriceMean: metric.targetPriceMean || null,
       targetPriceHigh: metric.targetPriceHigh || null,
       targetPriceLow: metric.targetPriceLow || null,
@@ -290,8 +315,10 @@ async function fetchPriceData(ticker) {
         profitMargin: metrics?.profitMargin,
         operatingMargin: metrics?.operatingMargin,
         dividendYield: metrics?.dividendYield,
+        fcfYield: metrics?.fcfYield,  // NEW: FCF Yield
         beta: metrics?.beta,
         eps: metrics?.eps,
+        freeCashFlowPerShare: metrics?.freeCashFlowPerShare,
         targetPriceMean: metrics?.targetPriceMean,
         targetPriceHigh: metrics?.targetPriceHigh,
         targetPriceLow: metrics?.targetPriceLow,
@@ -344,6 +371,7 @@ function generateMockData(ticker) {
       returnOnEquity: '147%',
       profitMargin: '25%',
       dividendYield: '0.5%',
+      fcfYield: '3.8%',  // NEW
       beta: 1.3,
       dataSource: 'Mock Data (Fallback)',
       hasRealMetrics: false
@@ -364,6 +392,7 @@ function generateMockData(ticker) {
       returnOnEquity: '98%',
       profitMargin: '49%',
       dividendYield: '0.03%',
+      fcfYield: '2.1%',  // NEW
       beta: 1.7,
       dataSource: 'Mock Data (Fallback)',
       hasRealMetrics: false
@@ -384,6 +413,7 @@ function generateMockData(ticker) {
       returnOnEquity: '28%',
       profitMargin: '15%',
       dividendYield: 'None',
+      fcfYield: '1.9%',  // NEW
       beta: 2.0,
       dataSource: 'Mock Data (Fallback)',
       hasRealMetrics: false
@@ -404,6 +434,7 @@ function generateMockData(ticker) {
       returnOnEquity: '42%',
       profitMargin: '36%',
       dividendYield: '0.7%',
+      fcfYield: '3.2%',  // NEW
       beta: 0.9,
       dataSource: 'Mock Data (Fallback)',
       hasRealMetrics: false
@@ -423,6 +454,7 @@ function generateMockData(ticker) {
     weekLow52: parseFloat((Math.random() * 50 + 100).toFixed(2)),
     peRatio: Math.floor(Math.random() * 40 + 15),
     dividendYield: Math.random() > 0.5 ? '~' + (Math.random() * 3 + 0.5).toFixed(1) + '%' : 'None',
+    fcfYield: '~' + (Math.random() * 3 + 1).toFixed(1) + '%',  // NEW
     beta: parseFloat((Math.random() * 1.5 + 0.8).toFixed(1)),
     dataSource: 'Mock Data (Fallback)',
     hasRealMetrics: false
