@@ -1,5 +1,3 @@
-// ── Main Fetcher with API Priority Chain ─────────────────────────────
-
 async function fetchPriceData(ticker) {
   const hasFinnhub = !!state.apiKeys.finnhub;
   const hasAlphaVantage = !!state.apiKeys.alphaVantage;
@@ -7,7 +5,7 @@ async function fetchPriceData(ticker) {
   
   // Check if at least one API is configured
   if (!hasFinnhub && !hasAlphaVantage && !hasMassive) {
-    throw new Error('⚠ No API configured. Please add at least one API key in Settings (⚙ button):\n\n• Finnhub (fast price + metrics)\n• Alpha Vantage (rich fundamentals)\n• MASSIVE API (your custom source)');
+    throw new Error('⚠ No API configured. Please add at least one API key in Settings (⚙ button):\n\n• Massive API (rich fundamentals + aggregates)\n• Finnhub (fast price + metrics)\n• Alpha Vantage (fundamentals)');
   }
   
   let priceData = null;
@@ -16,22 +14,26 @@ async function fetchPriceData(ticker) {
   let recommendationsData = null;
   let incomeData = null;
   
-  // Try MASSIVE API first (if configured - your premium source)
+  // ── Try Massive FIRST (your premium source) ─────────────────────────
   if (hasMassive) {
     try {
-      const [quote, fundamentals] = await Promise.all([
+      const [quote, fundamentals, income, analyst] = await Promise.all([
         fetchMassiveQuote(ticker).catch(() => null),
-        fetchMassiveFundamentals(ticker).catch(() => null)
+        fetchMassiveFundamentals(ticker).catch(() => null),
+        fetchMassiveIncomeStatement(ticker).catch(() => null),
+        fetchMassiveAnalystEstimates(ticker).catch(() => null)
       ]);
       
       if (quote) priceData = quote;
       if (fundamentals) fundamentalsData = fundamentals;
+      if (income) incomeData = income;
+      if (analyst) recommendationsData = { ...recommendationsData, ...analyst };
     } catch (error) {
-      console.warn('MASSIVE API partial failure:', error.message);
+      console.warn('Massive API partial failure:', error.message);
     }
   }
   
-  // Try Finnhub (if configured)
+  // ── Try Finnhub (if configured) ─────────────────────────────────────
   if (hasFinnhub) {
     try {
       const [quote, profile, metrics, recommendations] = await Promise.all([
@@ -44,13 +46,13 @@ async function fetchPriceData(ticker) {
       if (quote && !priceData) priceData = quote;
       if (profile) profileData = profile;
       if (metrics) fundamentalsData = { ...fundamentalsData, ...metrics };
-      if (recommendations) recommendationsData = recommendations;
+      if (recommendations) recommendationsData = { ...recommendationsData, ...recommendations };
     } catch (error) {
       console.warn('Finnhub partial failure:', error.message);
     }
   }
   
-  // Try Alpha Vantage (if configured - great for fundamentals)
+  // ── Try Alpha Vantage (if configured) ───────────────────────────────
   if (hasAlphaVantage) {
     try {
       const [quote, fundamentals, income] = await Promise.all([
@@ -61,13 +63,13 @@ async function fetchPriceData(ticker) {
       
       if (quote && !priceData) priceData = quote;
       if (fundamentals) fundamentalsData = { ...fundamentalsData, ...fundamentals };
-      if (income) incomeData = income;
+      if (income) incomeData = { ...incomeData, ...income };
     } catch (error) {
       console.warn('Alpha Vantage partial failure:', error.message);
     }
   }
   
-  // Fallback to Yahoo Finance for price only (no API key needed)
+  // ── Fallback to Yahoo Finance (no API key needed) ───────────────────
   if (!priceData) {
     try {
       priceData = await fetchYahooFinance(ticker);
@@ -76,12 +78,12 @@ async function fetchPriceData(ticker) {
     }
   }
   
-  // Final check - must have at least price data
+  // ── Final validation ────────────────────────────────────────────────
   if (!priceData) {
     throw new Error('Unable to fetch price data. Please check:\n1. Ticker symbol is correct\n2. At least one API is configured\n3. Internet connection is active');
   }
   
-  // Combine all data sources
+  // ── Combine all data sources ────────────────────────────────────────
   return {
     ...priceData,
     companyName: profileData?.companyName || fundamentalsData?.companyName || `${ticker} Corporation`,
@@ -90,7 +92,7 @@ async function fetchPriceData(ticker) {
     exchange: profileData?.exchange || priceData?.exchange || 'NASDAQ',
     marketCap: profileData?.marketCap || fundamentalsData?.marketCap || null,
     
-    // REAL metrics from APIs
+    // REAL metrics from APIs (no mock data!)
     peRatio: fundamentalsData?.peRatio || null,
     evToEbitda: fundamentalsData?.evToEbitda || null,
     priceToBook: fundamentalsData?.priceToBook || null,
@@ -109,6 +111,8 @@ async function fetchPriceData(ticker) {
     revenueGrowthYoY: incomeData?.revenueGrowthYoY || null,
     operatingCashFlow: incomeData?.operatingCashFlow || null,
     freeCashFlow: incomeData?.freeCashFlow || null,
+    netIncome: incomeData?.netIncome || null,
+    ebitda: incomeData?.ebitda || null,
     
     // Analyst targets
     targetPriceMean: fundamentalsData?.targetPriceMean || null,
@@ -124,7 +128,7 @@ async function fetchPriceData(ticker) {
 
 function buildDataSourceString(hasFinnhub, hasAlphaVantage, hasMassive, priceSource) {
   const sources = [];
-  if (hasMassive) sources.push('MASSIVE');
+  if (hasMassive) sources.push('Massive');
   if (hasFinnhub) sources.push('Finnhub');
   if (hasAlphaVantage) sources.push('Alpha Vantage');
   if (priceSource === 'Yahoo Finance') sources.push('Yahoo');
