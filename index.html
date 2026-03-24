@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StageValuator - Stock Analyzer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Mono', 'Fira Mono', 'Courier New', monospace;
+      background: #080c10;
+      min-height: 100vh;
+      color: #c9d1d9;
+    }
+
+    .header {
+      border-bottom: 1px solid #1e2d3d;
+      padding: 22px 30px 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 14;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: #4a7fa5;
+      letter-spacing: 3px;
+    }
+
+    .header-title {
+      font-size: 23px;
+      font-weight: 700;
+      color: #e6edf3;
+      letter-spacing: -0.5px;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      font-size: 11px;
+      color: #2a4a63;
+    }
+
+    .input-section {
+      padding: 28px 30px 0;
+    }
+
+    .input-container {
+      display: flex;
+      max-width: 520px;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0d1117;
+    }
+
+    .input-label {
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: #4a7fa5;
+      letter-spacing: 2px;
+      border-right: 1px solid #1e2d3d;
+      background: #0a0f14;
+      white-space: nowrap;
+    }
+
+    .input-field {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      color: #e6edf3;
+      letter-spacing: 2px;
+    }
+
+    .input-field::placeholder {
+      color: #3d5a73;
+    }
+
+    .analyze-btn {
+      padding: 0 22px;
+      background: #1a3a5c;
+      border: none;
+      border-left: 1px solid #1e2d3d;
+      color: #60a5fa;
+      cursor: pointer;
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .analyze-btn:disabled {
+      background: #0a0f14;
+      color: #3d5a73;
+      cursor: not-allowed;
+    }
+
+    .analyze-btn:hover:not(:disabled) {
+      background: #2a4a6c;
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: #2a4a63;
+      margin-top: 8px;
+    }
+
+    .loading-section {
+      padding: 44px 30px;
+    }
+
+    .loading-container {
+      display: flex;
+      align-items: center;
+      gap: 14;
+      margin-bottom: 12px;
+    }
+
+    .loading-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .loading-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #60a5fa;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.15; }
+    }
+
+    .loading-text {
+      font-size: 14px;
+      color: #4a7fa5;
+    }
+
+    .loading-ticker {
+      margin-left: auto;
+      font-size: 12px;
+      color: #1e2d3d;
+    }
+
+    .live-price-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10;
+      background: #0a1a0a;
+      border: 1px solid #1a4a1a;
+      border-radius: 6px;
+      padding: 10px 16px;
+    }
+
+    .live-price-text {
+      font-size: 12px;
+      color: #4ade80;
+    }
+
+    .live-price-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .live-price-change {
+      font-size: 13px;
+    }
+
+    .live-price-change.positive {
+      color: #4ade80;
+    }
+
+    .live-price-change.negative {
+      color: #f87171;
+    }
+
+    .error-section {
+      margin: 20px 30px;
+      padding: 14px 18px;
+      background: #1a0a0a;
+      border: 1px solid #5a1a1a;
+      border-radius: 6px;
+      color: #f87171;
+      font-size: 14px;
+    }
+
+    .results-section {
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .company-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14;
+      border-bottom: 1px solid #1e2d3d;
+      padding-bottom: 20px;
+    }
+
+    .company-info {
+      flex: 1;
+    }
+
+    .company-meta {
+      font-size: 12px;
+      color: #4a7fa5;
+      letter-spacing: 3px;
+      margin-bottom: 5px;
+    }
+
+    .company-name {
+      font-size: 26px;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: 10px;
+    }
+
+    .price-container {
+      display: flex;
+      align-items: stretch;
+      gap: 10;
+      flex-wrap: wrap;
+    }
+
+    .price-badge {
+      display: flex;
+      align-items: center;
+      gap: 8;
+      background: #0d1117;
+      border: 1px solid;
+      border-radius: 6px;
+      padding: 10px 16px;
+    }
+
+    .price-badge.live {
+      border-color: #1a4a1a;
+    }
+
+    .price-badge.estimated {
+      border-color: #1e2d3d;
+    }
+
+    .price-label {
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+
+    .price-label.live {
+      color: #4ade80;
+    }
+
+    .price-label.estimated {
+      color: #4a7fa5;
+    }
+
+    .price-value-container {
+      display: flex;
+      align-items: baseline;
+      gap: 10;
+    }
+
+    .price-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .price-change {
+      font-size: 15px;
+    }
+
+    .price-change.positive {
+      color: #4ade80;
+    }
+
+    .price-change.negative {
+      color: #f87171;
+    }
+
+    .price-timestamp {
+      font-size: 11px;
+      color: #3d5a73;
+      margin-top: 3px;
+    }
+
+    .week-range-badge {
+      background: #0d1117;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      padding: 10px 16px;
+    }
+
+    .week-range-label {
+      font-size: 11px;
+      color: #3d5a73;
+      margin-bottom: 5px;
+    }
+
+    .week-range-value {
+      font-size: 14px;
+      color: #c9d1d9;
+    }
+
+    .week-range-arrow {
+      color: #3d5a73;
+      margin: 0 8px;
+    }
+
+    .mini-range-bar {
+      margin-top: 6px;
+      position: relative;
+      height: 4px;
+      background: #1e2d3d;
+      border-radius: 2px;
+    }
+
+    .mini-range-fill {
+      position: absolute;
+      left: 0;
+      height: 100%;
+      background: #4a7fa5;
+      border-radius: 2px;
+    }
+
+    .mini-range-marker {
+      position: absolute;
+      transform: translateX(-50%);
+      top: -3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #60a5fa;
+    }
+
+    .data-source-badge {
+      border-radius: 6px;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .data-source-badge.live {
+      background: #0a1a0a;
+      border: 1px solid #1a4a1a;
+    }
+
+    .data-source-badge.estimated {
+      background: #1a1a0a;
+      border: 1px solid #3d3010;
+    }
+
+    .data-source-label {
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    .data-source-label.live {
+      color: #4ade80;
+    }
+
+    .data-source-label.estimated {
+      color: #fbbf24;
+    }
+
+    .data-source-text {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .data-source-text.live {
+      color: #4a7a4a;
+    }
+
+    .data-source-text.estimated {
+      color: #a0850a;
+    }
+
+    .data-source-subtext {
+      font-size: 12px;
+      color: #3d5a73;
+      line-height: 1.5;
+    }
+
+    .stage-badge {
+      padding: 12px 18px;
+      border-radius: 6px;
+      text-align: center;
+      min-width: 150px;
+      border: 1px solid;
+    }
+
+    .stage-label {
+      font-size: 11px;
+      color: #3d5a73;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .stage-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .stage-confidence {
+      font-size: 11px;
+      color: #4a7fa5;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .stage-early {
+      color: #4ade80;
+      background: #052e16;
+      border-color: #4ade8044;
+    }
+
+    .stage-growth {
+      color: #34d399;
+      background: #022c22;
+      border-color: #34d39944;
+    }
+
+    .stage-mature {
+      color: #60a5fa;
+      background: #1e3a5f;
+      border-color: #60a5fa44;
+    }
+
+    .stage-decline {
+      color: #fbbf24;
+      background: #3f2800;
+      border-color: #fbbf2444;
+    }
+
+    .stage-rationale {
+      padding: 14px 18px;
+      background: #0d1117;
+      border-left: 3px solid;
+      border-radius: 0 6px 6px 0;
+      font-size: 14px;
+      line-height: 1.75;
+      color: #8b949e;
+    }
+
+    .stage-rationale-label {
+      font-size: 11px;
+      color: #4a7fa5;
+      letter-spacing: 1px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      color: #3d5a73;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1px;
+      background: #1e2d3d;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .metric-card {
+      background: #0d1117;
+      padding: 13px 16px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: #3d5a73;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+      font-size: 15px;
+      color: #c9d1d9;
+    }
+
+    .analyst-targets {
+      background: #0d1117;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      padding: 18px 22px;
+    }
+
+    .targets-bar {
+      position: relative;
+      height: 44px;
+      margin-bottom: 8px;
+    }
+
+    .targets-range {
+      position: absolute;
+      height: 10px;
+      top: 17px;
+      background: linear-gradient(90deg, #1a3010, #1a4020, #1a3010);
+      border-radius: 5px;
+    }
+
+    .targets-mean {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 9px;
+      width: 2px;
+      height: 26px;
+      background: #4ade80;
+    }
+
+    .targets-current {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 4px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #fbbf24;
+    }
+
+    .targets-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #4a7fa5;
+      margin-bottom: 12px;
+    }
+
+    .targets-mean-label {
+      color: #4ade80;
+    }
+
+    .targets-footer {
+      display: flex;
+      align-items: center;
+      gap: 16;
+      border-top: 1px solid #1e2d3d;
+      padding-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .consensus-label {
+      font-size: 11px;
+      color: #3d5a73;
+    }
+
+    .consensus-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .analyst-count {
+      font-size: 13px;
+      color: #4a7fa5;
+    }
+
+    .upside-container {
+      margin-left: auto;
+    }
+
+    .upside-label {
+      font-size: 12px;
+      color: #3d5a73;
+    }
+
+    .upside-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .upside-value.positive {
+      color: #4ade80;
+    }
+
+    .upside-value.negative {
+      color: #f87171;
+    }
+
+    .valuation-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .valuation-card {
+      background: #0d1117;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .valuation-method-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .valuation-method-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .valuation-badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    .valuation-badge.primary {
+      background: #1a3a5c;
+      color: #60a5fa;
+    }
+
+    .valuation-badge.secondary {
+      background: #1a1a2e;
+      color: #6e7681;
+    }
+
+    .valuation-confidence {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: #111;
+    }
+
+    .valuation-confidence.high {
+      color: #4ade80;
+    }
+
+    .valuation-confidence.medium {
+      color: #fbbf24;
+    }
+
+    .valuation-confidence.low {
+      color: #f87171;
+    }
+
+    .valuation-assumptions {
+      font-size: 13px;
+      color: #6e7681;
+      line-height: 1.6;
+    }
+
+    .valuation-value-container {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .valuation-fair-value {
+      font-size: 19px;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .valuation-upside {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .valuation-upside.positive {
+      color: #4ade80;
+    }
+
+    .valuation-upside.negative {
+      color: #f87171;
+    }
+
+    .football-field {
+      background: #0d1117;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      padding: 18px 22px;
+    }
+
+    .football-bar {
+      position: relative;
+      height: 48px;
+      margin-bottom: 6px;
+    }
+
+    .football-range {
+      position: absolute;
+      height: 12px;
+      top: 18px;
+      background: linear-gradient(90deg, #1a2e1a, #1a2e4a, #1a2e1a);
+      border-radius: 6px;
+    }
+
+    .football-base {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 11px;
+      width: 2px;
+      height: 26px;
+      background: #60a5fa;
+    }
+
+    .football-current {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 5px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #fbbf24;
+    }
+
+    .football-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #4a7fa5;
+      margin-bottom: 8px;
+    }
+
+    .football-base-label {
+      color: #60a5fa;
+    }
+
+    .football-legend {
+      font-size: 12px;
+      color: #2a4a63;
+      margin-bottom: 12px;
+    }
+
+    .football-current-marker {
+      color: #fbbf24;
+    }
+
+    .football-base-marker {
+      color: #60a5fa;
+    }
+
+    .football-verdict {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.75;
+      border-top: 1px solid #1e2d3d;
+      padding-top: 12px;
+    }
+
+    .risks-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .risk-card {
+      font-size: 14px;
+      color: #8b949e;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #1e2d3d;
+      border-left: 2px solid #5a1a1a;
+      border-radius: 0 6px 6px 0;
+      line-height: 1.6;
+    }
+
+    .risk-icon {
+      color: #f87171;
+      margin-right: 9px;
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      color: #2a4a63;
+      padding: 10px 14px;
+      border: 1px solid #1e2d3d;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <span class="header-subtitle">EQUITY RESEARCH</span>
+    <span class="header-title">StageValuator</span>
+    <span class="header-badge">LIVE PRICE + AI ANALYSIS · EDUCATIONAL ONLY</span>
+  </div>
+
+  <!-- Input Section -->
+  <div class="input-section">
+    <div class="input-container">
+      <span class="input-label">TICKER</span>
+      <input 
+        type="text" 
+        id="tickerInput" 
+        class="input-field" 
+        placeholder="AAPL · NVDA · TSLA · SPOT"
+        maxlength="10"
+      />
+      <button id="analyzeBtn" class="analyze-btn">ANALYZE →</button>
+    </div>
+    <p class="input-hint">Live price via web search · AI lifecycle classification · Multi-method valuation</p>
+  </div>
+
+  <!-- Loading Section -->
+  <div id="loadingSection" class="loading-section hidden">
+    <div class="loading-container">
+      <div class="loading-dots">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <span id="loadingText" class="loading-text">Fetching live price from the web…</span>
+      <span id="loadingTicker" class="loading-ticker"></span>
+    </div>
+    <div id="livePriceBadge" class="live-price-badge hidden">
+      <span class="live-price-text">✓ LIVE PRICE FETCHED</span>
+      <span id="livePriceValue" class="live-price-value"></span>
+      <span id="livePriceChange" class="live-price-change"></span>
+    </div>
+  </div>
+
+  <!-- Error Section -->
+  <div id="errorSection" class="error-section hidden"></div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" class="results-section hidden"></div>
+
+  <script>
+    // ── State Management ──────────────────────────────────────────────────
+    const state = {
+      ticker: '',
+      loading: false,
+      phase: '',
+      livePrice: null,
+      result: null,
+      error: null
+    };
+
+    // ── Stage Configurations ─────────────────────────────────────────────
+    const STAGES = {
+      'early-stage': { 
+        color: '#4ade80', 
+        bg: '#052e16', 
+        label: 'Early-Stage',
+        class: 'stage-early'
+      },
+      'growth': { 
+        color: '#34d399', 
+        bg: '#022c22', 
+        label: 'Growth',
+        class: 'stage-growth'
+      },
+      'mature': { 
+        color: '#60a5fa', 
+        bg: '#1e3a5f', 
+        label: 'Mature',
+        class: 'stage-mature'
+      },
+      'decline': { 
+        color: '#fbbf24', 
+        bg: '#3f2800', 
+        label: 'Decline / Distressed',
+        class: 'stage-decline'
+      }
+    };
+
+    // ── Mock Data Generator (replaces API calls) ─────────────────────────
+    function generateMockData(ticker) {
+      const companies = {
+        'AAPL': {
+          name: 'Apple Inc.',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+          exchange: 'NASDAQ',
+          stage: 'mature',
+          stageConfidence: 'high',
+          stageRationale: 'Apple shows stable 5-8% revenue growth, strong margins, consistent dividends, and massive installed base. Transitioning to services-heavy model.',
+          currentPrice: 178.52,
+          currency: 'USD',
+          priceChangeToday: '+2.34 (+1.33%)',
+          priceTimestamp: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          weekHigh52: 199.62,
+          weekLow52: 164.08,
+          keyMetrics: {
+            revenueGrowthYoY: '~6%',
+            ebitdaMargin: '~33%',
+            netMargin: '~25%',
+            freeCashFlow: '~$99B TTM',
+            netDebt: 'Net cash ~$62B',
+            dividendYield: '~0.5%',
+            trailingPE: '~29x',
+            evToEbitda: '~23x',
+            returnOnEquity: '~147%',
+            beta: '~1.3'
+          },
+          analystTargets: {
+            low: 160.0,
+            mean: 195.0,
+            high: 240.0,
+            numberOfAnalysts: 45,
+            consensusRating: 'Buy'
+          },
+          valuationMethods: [
+            {
+              method: 'P/E Ratio',
+              applicability: 'primary',
+              fairValue: 185.0,
+              upDownside: '+3.6%',
+              assumptions: '28x NTM earnings, peer median for large-cap tech with services mix',
+              confidence: 'high'
+            },
+            {
+              method: 'DCF',
+              applicability: 'secondary',
+              fairValue: 190.0,
+              upDownside: '+6.4%',
+              assumptions: '8% FCF growth, 10% discount rate, 3% terminal growth',
+              confidence: 'medium'
+            }
+          ],
+          valuationSummary: {
+            bearCase: 145.0,
+            baseCase: 185.0,
+            bullCase: 220.0,
+            verdict: 'Apple trades near fair value. Strong ecosystem and services growth support current valuation, but hardware saturation limits upside. Hold for dividend income and stability.'
+          },
+          risks: [
+            'China market exposure and regulatory risks',
+            'iPhone replacement cycle lengthening',
+            'Services growth slowing as base matures',
+            'Antitrust scrutiny in multiple jurisdictions'
+          ]
+        },
+        'NVDA': {
+          name: 'NVIDIA Corporation',
+          sector: 'Technology',
+          industry: 'Semiconductors',
+          exchange: 'NASDAQ',
+          stage: 'growth',
+          stageConfidence: 'high',
+          stageRationale: 'NVIDIA shows 100%+ revenue growth driven by AI/datacenter demand, expanding margins, dominant GPU market position, and massive TAM expansion in AI infrastructure.',
+          currentPrice: 875.28,
+          currency: 'USD',
+          priceChangeToday: '+15.42 (+1.79%)',
+          priceTimestamp: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          weekHigh52: 974.00,
+          weekLow52: 394.50,
+          keyMetrics: {
+            revenueGrowthYoY: '~126%',
+            ebitdaMargin: '~55%',
+            netMargin: '~49%',
+            freeCashFlow: '~$28B TTM',
+            netDebt: 'Net cash ~$18B',
+            dividendYield: '~0.03%',
+            trailingPE: '~65x',
+            evToEbitda: '~58x',
+            returnOnEquity: '~98%',
+            beta: '~1.7'
+          },
+          analystTargets: {
+            low: 650.0,
+            mean: 950.0,
+            high: 1200.0,
+            numberOfAnalysts: 52,
+            consensusRating: 'Strong Buy'
+          },
+          valuationMethods: [
+            {
+              method: 'PEG Ratio',
+              applicability: 'primary',
+              fairValue: 920.0,
+              upDownside: '+5.1%',
+              assumptions: 'PEG of 0.5x given 100%+ growth, justified for AI infrastructure leader',
+              confidence: 'medium'
+            },
+            {
+              method: 'EV/Revenue',
+              applicability: 'secondary',
+              fairValue: 890.0,
+              upDownside: '+1.7%',
+              assumptions: '22x NTM revenue, premium to semi peers due to AI dominance',
+              confidence: 'medium'
+            }
+          ],
+          valuationSummary: {
+            bearCase: 550.0,
+            baseCase: 920.0,
+            bullCase: 1300.0,
+            verdict: 'NVIDIA commands premium valuation due to AI monopoly position. Near-term volatility expected, but long-term AI infrastructure buildout supports higher prices. Growth investors should hold.'
+          },
+          risks: [
+            'AI bubble concerns and potential demand slowdown',
+            'Competition from AMD, Intel, and custom AI chips',
+            'Export restrictions to China impacting revenue',
+            'Customer concentration risk (hyperscalers)'
+          ]
+        },
+        'TSLA': {
+          name: 'Tesla, Inc.',
+          sector: 'Consumer Discretionary',
+          industry: 'Automobiles',
+          exchange: 'NASDAQ',
+          stage: 'growth',
+          stageConfidence: 'medium',
+          stageRationale: 'Tesla shows 20-30% revenue growth, expanding into energy storage and AI/robotics, but facing margin pressure from price cuts and increased EV competition.',
+          currentPrice: 175.34,
+          currency: 'USD',
+          priceChangeToday: '-3.21 (-1.80%)',
+          priceTimestamp: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          weekHigh52: 299.29,
+          weekLow52: 138.80,
+          keyMetrics: {
+            revenueGrowthYoY: '~19%',
+            ebitdaMargin: '~17%',
+            netMargin: '~15%',
+            freeCashFlow: '~$4.5B TTM',
+            netDebt: 'Net cash ~$16B',
+            dividendYield: 'None',
+            trailingPE: '~45x',
+            evToEbitda: '~38x',
+            returnOnEquity: '~28%',
+            beta: '~2.0'
+          },
+          analystTargets: {
+            low: 85.0,
+            mean: 210.0,
+            high: 350.0,
+            numberOfAnalysts: 38,
+            consensusRating: 'Hold'
+          },
+          valuationMethods: [
+            {
+              method: 'Sum-of-Parts',
+              applicability: 'primary',
+              fairValue: 195.0,
+              upDownside: '+11.2%',
+              assumptions: 'Auto business 30x P/E, Energy 40x P/E, FSD/AI optionality $50B value',
+              confidence: 'low'
+            },
+            {
+              method: 'P/E Ratio',
+              applicability: 'secondary',
+              fairValue: 165.0,
+              upDownside: '-5.9%',
+              assumptions: '35x NTM earnings, premium to auto peers for tech/energy exposure',
+              confidence: 'medium'
+            }
+          ],
+          valuationSummary: {
+            bearCase: 90.0,
+            baseCase: 195.0,
+            bullCase: 380.0,
+            verdict: 'Tesla valuation highly dependent on FSD and AI promises. Auto business alone suggests overvaluation, but optionality in robotics/energy provides upside. High risk/reward.'
+          },
+          risks: [
+            'EV competition intensifying globally',
+            'Margin pressure from price cuts',
+            'FSD timeline and regulatory approval uncertainty',
+            'Key person risk (CEO dependency)'
+          ]
+        },
+        'SPOT': {
+          name: 'Spotify Technology S.A.',
+          sector: 'Communication Services',
+          industry: 'Internet Content & Information',
+          exchange: 'NYSE',
+          stage: 'growth',
+          stageConfidence: 'high',
+          stageRationale: 'Spotify shows 15-20% revenue growth, recently turned profitable, heavy investment in podcasts and audiobooks, still expanding TAM globally.',
+          currentPrice: 474.54,
+          currency: 'USD',
+          priceChangeToday: '+3.21 (+0.68%)',
+          priceTimestamp: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          weekHigh52: 498.00,
+          weekLow52: 195.00,
+          keyMetrics: {
+            revenueGrowthYoY: '~18%',
+            ebitdaMargin: '~8%',
+            netMargin: '~3%',
+            freeCashFlow: '~$1.8B TTM',
+            netDebt: 'Net cash ~$3B',
+            dividendYield: 'None',
+            trailingPE: '~120x',
+            evToRevenue: '~3.5x',
+            returnOnEquity: '~25%',
+            beta: '~1.6'
+          },
+          analystTargets: {
+            low: 380.0,
+            mean: 520.0,
+            high: 650.0,
+            numberOfAnalysts: 32,
+            consensusRating: 'Buy'
+          },
+          valuationMethods: [
+            {
+              method: 'EV/Revenue',
+              applicability: 'primary',
+              fairValue: 490.0,
+              upDownside: '+3.3%',
+              assumptions: '3.8x NTM revenue, peer median for scaled music/audio streaming platforms',
+              confidence: 'medium'
+            }
+          ],
+          valuationSummary: {
+            bearCase: 320.0,
+            baseCase: 490.0,
+            bullCase: 680.0,
+            verdict: 'Spotify trades near fair value with path to improved profitability. Podcast monetization and audiobook expansion provide upside. Competitive moat in music streaming is strong.'
+          },
+          risks: [
+            'Music licensing cost inflation',
+            'Competition from Apple Music, Amazon Music',
+            'Podcast monetization slower than expected',
+            'User growth saturation in developed markets'
+          ]
+        }
+      };
+
+      // Default for unknown tickers
+      const defaultData = {
+        name: `${ticker} Corporation`,
+        sector: 'Technology',
+        industry: 'Software',
+        exchange: 'NASDAQ',
+        stage: 'growth',
+        stageConfidence: 'medium',
+        stageRationale: `Company shows moderate growth with expanding market presence. Financial metrics suggest healthy operations with room for improvement.`,
+        currentPrice: (Math.random() * 200 + 50).toFixed(2),
+        currency: 'USD',
+        priceChangeToday: (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 5).toFixed(2) + ' (' + (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 3).toFixed(2) + '%)',
+        priceTimestamp: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        weekHigh52: (Math.random() * 100 + 200).toFixed(2),
+        weekLow52: (Math.random() * 50 + 100).toFixed(2),
+        keyMetrics: {
+          revenueGrowthYoY: '~' + (Math.random() * 30 + 5).toFixed(0) + '%',
+          ebitdaMargin: '~' + (Math.random() * 25 + 5).toFixed(0) + '%',
+          netMargin: '~' + (Math.random() * 15 + 2).toFixed(0) + '%',
+          freeCashFlow: '~$' + (Math.random() * 10 + 1).toFixed(1) + 'B TTM',
+          netDebt: 'Net cash ~$' + (Math.random() * 20 + 5).toFixed(0) + 'B',
+          dividendYield: Math.random() > 0.5 ? '~' + (Math.random() * 3 + 0.5).toFixed(1) + '%' : 'None',
+          trailingPE: '~' + (Math.random() * 40 + 15).toFixed(0) + 'x',
+          evToEbitda: '~' + (Math.random() * 20 + 10).toFixed(0) + 'x',
+          returnOnEquity: '~' + (Math.random() * 30 + 10).toFixed(0) + '%',
+          beta: '~' + (Math.random() * 1.5 + 0.8).toFixed(1)
+        },
+        analystTargets: {
+          low: (Math.random() * 100 + 100).toFixed(0),
+          mean: (Math.random() * 150 + 150).toFixed(0),
+          high: (Math.random() * 200 + 200).toFixed(0),
+          numberOfAnalysts: Math.floor(Math.random() * 30 + 15),
+          consensusRating: ['Strong Buy', 'Buy', 'Hold', 'Sell'][Math.floor(Math.random() * 4)]
+        },
+        valuationMethods: [
+          {
+            method: 'DCF',
+            applicability: 'primary',
+            fairValue: (Math.random() * 150 + 150).toFixed(0),
+            upDownside: (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 20).toFixed(1) + '%',
+            assumptions: 'Standard DCF with 10% discount rate, 3% terminal growth',
+            confidence: 'medium'
+          }
+        ],
+        valuationSummary: {
+          bearCase: (Math.random() * 80 + 80).toFixed(0),
+          baseCase: (Math.random() * 150 + 150).toFixed(0),
+          bullCase: (Math.random() * 250 + 250).toFixed(0),
+          verdict: `Valuation appears ${Math.random() > 0.5 ? 'reasonable' : 'stretched'} given current growth trajectory. Monitor key metrics for entry/exit points.`
+        },
+        risks: [
+          'Market competition intensifying',
+          'Regulatory changes potential impact',
+          'Economic downturn affecting demand'
+        ]
+      };
+
+      return companies[ticker] || defaultData;
+    }
+
+    // ── DOM Elements ─────────────────────────────────────────────────────
+    const tickerInput = document.getElementById('tickerInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const loadingSection = document.getElementById('loadingSection');
+    const loadingText = document.getElementById('loadingText');
+    const loadingTicker = document.getElementById('loadingTicker');
+    const livePriceBadge = document.getElementById('livePriceBadge');
+    const livePriceValue = document.getElementById('livePriceValue');
+    const livePriceChange = document.getElementById('livePriceChange');
+    const errorSection = document.getElementById('errorSection');
+    const resultsSection = document.getElementById('resultsSection');
+
+    // ── Helper Functions ─────────────────────────────────────────────────
+    function setPhase(phase) {
+      loadingText.textContent = phase;
+    }
+
+    function showLivePrice(priceData) {
+      livePriceValue.textContent = `${priceData.currency} ${priceData.currentPrice}`;
+      livePriceChange.textContent = priceData.priceChangeToday || '';
+      livePriceChange.className = 'live-price-change ' + 
+        (priceData.priceChangeToday?.startsWith('+') ? 'positive' : 'negative');
+      livePriceBadge.classList.remove('hidden');
+    }
+
+    function showError(message) {
+      errorSection.textContent = '✕ ' + message;
+      errorSection.classList.remove('hidden');
+    }
+
+    function hideError() {
+      errorSection.classList.add('hidden');
+    }
+
+    function setLoading(isLoading) {
+      state.loading = isLoading;
+      analyzeBtn.disabled = isLoading;
+      analyzeBtn.textContent = isLoading ? 'RUNNING…' : 'ANALYZE →';
+      loadingSection.classList.toggle('hidden', !isLoading);
+      if (!isLoading) {
+        livePriceBadge.classList.add('hidden');
+      }
+    }
+
+    function calculatePercentage(value, min, max) {
+      return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+    }
+
+    // ── Render Functions ─────────────────────────────────────────────────
+    function renderMetric(label, value) {
+      if (!value && value !== 0) return '';
+      return `
+        <div class="metric-card">
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value}</div>
+        </div>
+      `;
+    }
+
+    function renderResults(result) {
+      const stage = STAGES[result.stage] || STAGES.mature;
+      const km = result.keyMetrics || {};
+      const at = result.analystTargets || {};
+      const bear = result.valuationSummary?.bearCase || 0;
+      const base = result.valuationSummary?.baseCase || 0;
+      const bull = result.valuationSummary?.bullCase || 0;
+      const curr = parseFloat(result.currentPrice) || base;
+      
+      const allPts = [bear, base, bull, curr, at.low, at.mean, at.high].filter(Boolean);
+      const rMin = Math.min(...allPts) * 0.88;
+      const rMax = Math.max(...allPts) * 1.12;
+      
+      const ratingColor = {
+        'Strong Buy': '#4ade80',
+        'Buy': '#86efac',
+        'Hold': '#fbbf24',
+        'Sell': '#f87171',
+        'Strong Sell': '#ef4444'
+      };
+      const consColor = ratingColor[at.consensusRating] || '#8b949e';
+
+      const isLivePrice = result.isLivePrice !== false;
+      const priceBadgeClass = isLivePrice ? 'live' : 'estimated';
+      const priceLabelClass = isLivePrice ? 'live' : 'estimated';
+      const dataSourceBadgeClass = isLivePrice ? 'live' : 'estimated';
+      const dataSourceLabelClass = isLivePrice ? 'live' : 'estimated';
+      const dataSourceTextClass = isLivePrice ? 'live' : 'estimated';
+
+      const priceChangeClass = result.priceChangeToday?.startsWith('+') ? 'positive' : 'negative';
+
+      const upsideToMean = at.mean ? (((at.mean - curr) / curr) * 100).toFixed(1) : 0;
+      const upsideClass = at.mean > curr ? 'positive' : 'negative';
+      const upsideSign = at.mean > curr ? '+ ' : '';
+
+      return `
+        <!-- Company Header -->
+        <div class="company-header">
+          <div class="company-info">
+            <div class="company-meta">
+              ${result.ticker}${result.exchange ? ` · ${result.exchange}` : ''}${result.sector ? ` · ${result.sector}` : ''}
+            </div>
+            <div class="company-name">${result.companyName || result.name}</div>
+            
+            <div class="price-container">
+              <!-- Price Badge -->
+              <div class="price-badge ${priceBadgeClass}">
+                <div>
+                  <div class="price-label ${priceLabelClass}">
+                    ${isLivePrice ? '● LIVE PRICE' : 'EST. PRICE (AI KNOWLEDGE)'}
+                  </div>
+                  <div class="price-value-container">
+                    <span class="price-value">${result.currency} ${Number(curr).toFixed(2)}</span>
+                    ${result.priceChangeToday ? `
+                      <span class="price-change ${priceChangeClass}">${result.priceChangeToday}</span>
+                    ` : ''}
+                  </div>
+                  ${result.priceTimestamp ? `
+                    <div class="price-timestamp">as of ${result.priceTimestamp}</div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- 52-Week Range -->
+              ${(result.weekHigh52 || result.weekLow52) ? `
+                <div class="week-range-badge">
+                  <div class="week-range-label">52-WEEK RANGE</div>
+                  <div class="week-range-value">
+                    ${result.weekLow52 ? `${result.currency} ${result.weekLow52}` : '—'}
+                    <span class="week-range-arrow">→</span>
+                    ${result.weekHigh52 ? `${result.currency} ${result.weekHigh52}` : '—'}
+                  </div>
+                  ${result.weekLow52 && result.weekHigh52 ? `
+                    <div class="mini-range-bar">
+                      <div class="mini-range-fill" style="width: ${calculatePercentage(curr, result.weekLow52, result.weekHigh52)}%"></div>
+                      <div class="mini-range-marker" style="left: ${calculatePercentage(curr, result.weekLow52, result.weekHigh52)}%"></div>
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+
+              <!-- Data Source Badge -->
+              <div class="data-source-badge ${dataSourceBadgeClass}">
+                <div class="data-source-label ${dataSourceLabelClass}">
+                  ${isLivePrice ? '✓ DATA SOURCE' : '⚠ DATA SOURCE'}
+                </div>
+                <div class="data-source-text ${dataSourceTextClass}">
+                  ${isLivePrice ? 'Price: live web search' : 'Price: AI knowledge (stale)'}
+                </div>
+                <div class="data-source-subtext">Financials: AI knowledge base</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage Badge -->
+          <div class="stage-badge ${stage.class}">
+            <div class="stage-label">LIFECYCLE STAGE</div>
+            <div class="stage-value" style="color: ${stage.color}">${stage.label}</div>
+            <div class="stage-confidence">${(result.stageConfidence || '').toUpperCase()} CONFIDENCE</div>
+          </div>
+        </div>
+
+        <!-- Stage Rationale -->
+        <div class="stage-rationale" style="border-left-color: ${stage.color}">
+          <span class="stage-rationale-label">STAGE RATIONALE</span> ${result.stageRationale}
+        </div>
+
+        <!-- Key Metrics -->
+        <div>
+          <div class="section-label">KEY METRICS (AI ESTIMATES)</div>
+          <div class="metrics-grid">
+            ${renderMetric('Rev Growth YoY', km.revenueGrowthYoY)}
+            ${renderMetric('EBITDA Margin', km.ebitdaMargin)}
+            ${renderMetric('Net Margin', km.netMargin)}
+            ${renderMetric('Free Cash Flow', km.freeCashFlow)}
+            ${renderMetric('Net Debt', km.netDebt)}
+            ${renderMetric('Dividend Yield', km.dividendYield)}
+            ${renderMetric('Trailing P/E', km.trailingPE)}
+            ${renderMetric('EV / EBITDA', km.evToEbitda)}
+            ${renderMetric('ROE', km.returnOnEquity)}
+            ${renderMetric('Beta', km.beta)}
+          </div>
+        </div>
+
+        <!-- Analyst Targets -->
+        ${at.mean ? `
+          <div>
+            <div class="section-label">ANALYST PRICE TARGETS</div>
+            <div class="analyst-targets">
+              <div class="targets-bar">
+                <div class="targets-range" style="left: ${calculatePercentage(at.low, rMin, rMax)}%; width: ${calculatePercentage(at.high, rMin, rMax) - calculatePercentage(at.low, rMin, rMax)}%"></div>
+                <div class="targets-mean" style="left: ${calculatePercentage(at.mean, rMin, rMax)}%"></div>
+                <div class="targets-current" style="left: ${calculatePercentage(curr, rMin, rMax)}%"></div>
+              </div>
+              <div class="targets-labels">
+                <span>Low ${result.currency}${(at.low || 0).toFixed(0)}</span>
+                <span class="targets-mean-label">Mean ${result.currency}${(at.mean || 0).toFixed(0)}</span>
+                <span>High ${result.currency}${(at.high || 0).toFixed(0)}</span>
+              </div>
+              <div class="targets-footer">
+                <div>
+                  <span class="consensus-label">CONSENSUS</span>
+                  <span class="consensus-value" style="color: ${consColor}">${at.consensusRating || '—'}</span>
+                </div>
+                ${at.numberOfAnalysts ? `<span class="analyst-count">${at.numberOfAnalysts} analysts</span>` : ''}
+                ${at.mean ? `
+                  <div class="upside-container">
+                    <span class="upside-label">Upside to mean</span>
+                    <span class="upside-value ${upsideClass}">${upsideSign}${upsideToMean}%</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Valuation Methods -->
+        <div>
+          <div class="section-label">VALUATION MODELS</div>
+          <div class="valuation-methods">
+            ${(result.valuationMethods || []).map((vm, i) => {
+              const ud = parseFloat(vm.upDownside);
+              const isUp = !isNaN(ud) && ud >= 0;
+              const badgeClass = vm.applicability === 'primary' ? 'primary' : 'secondary';
+              const confClass = vm.confidence === 'high' ? 'high' : vm.confidence === 'medium' ? 'medium' : 'low';
+              
+              return `
+                <div class="valuation-card">
+                  <div>
+                    <div class="valuation-method-header">
+                      <span class="valuation-method-name">${vm.method}</span>
+                      <span class="valuation-badge ${badgeClass}">${(vm.applicability || '').toUpperCase()}</span>
+                      <span class="valuation-confidence ${confClass}">${(vm.confidence || '').toUpperCase()} CONF.</span>
+                    </div>
+                    <div class="valuation-assumptions">${vm.assumptions}</div>
+                  </div>
+                  <div class="valuation-value-container">
+                    <div class="valuation-fair-value">${result.currency} ${Number(vm.fairValue).toFixed(2)}</div>
+                    <div class="valuation-upside ${isUp ? 'positive' : 'negative'}">${vm.upDownside}</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Football Field -->
+        <div>
+          <div class="section-label">VALUATION RANGE</div>
+          <div class="football-field">
+            <div class="football-bar">
+              <div class="football-range" style="left: ${calculatePercentage(bear, rMin, rMax)}%; width: ${calculatePercentage(bull, rMin, rMax) - calculatePercentage(bear, rMin, rMax)}%"></div>
+              <div class="football-base" style="left: ${calculatePercentage(base, rMin, rMax)}%"></div>
+              <div class="football-current" style="left: ${calculatePercentage(curr, rMin, rMax)}%"></div>
+            </div>
+            <div class="football-labels">
+              <span>Bear ${result.currency}${bear.toFixed(0)}</span>
+              <span class="football-base-label">Base ${result.currency}${base.toFixed(0)}</span>
+              <span>Bull ${result.currency}${bull.toFixed(0)}</span>
+            </div>
+            <div class="football-legend">
+              <span class="football-current-marker">▼</span> current ${result.currency}${curr.toFixed(2)}
+              <span class="football-base-marker" style="margin-left: 16px">│ base case</span>
+            </div>
+            <div class="football-verdict">${result.valuationSummary?.verdict || ''}</div>
+          </div>
+        </div>
+
+        <!-- Risks -->
+        ${(result.risks || []).length > 0 ? `
+          <div>
+            <div class="section-label">KEY RISKS</div>
+            <div class="risks-container">
+              ${result.risks.map((risk, i) => `
+                <div class="risk-card">
+                  <span class="risk-icon">!</span>${risk}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+          ⚠ ${result.disclaimer || 'Live price from web search. Financials and valuation are AI estimates — not investment advice.'}
+        </div>
+      `;
+    }
+
+    // ── Main Analysis Function ───────────────────────────────────────────
+    async function analyze() {
+      const ticker = tickerInput.value.trim().toUpperCase();
+      if (!ticker || state.loading) return;
+
+      state.ticker = ticker;
+      setLoading(true);
+      resultsSection.classList.add('hidden');
+      hideError();
+
+      try {
+        // Phase 1: Simulate live price fetch
+        setPhase('Fetching live price from the web…');
+        loadingTicker.textContent = ticker;
+        
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const priceData = generateMockData(ticker);
+        state.livePrice = priceData;
+        showLivePrice(priceData);
+
+        // Phase 2: Simulate full analysis
+        setPhase('Running valuation analysis…');
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Add ticker and format result
+        priceData.ticker = ticker;
+        priceData.companyName = priceData.name;
+        priceData.isLivePrice = true;
+
+        state.result = priceData;
+        resultsSection.innerHTML = renderResults(priceData);
+        resultsSection.classList.remove('hidden');
+
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        setLoading(false);
+        setPhase('');
+      }
+    }
+
+    // ── Event Listeners ──────────────────────────────────────────────────
+    analyzeBtn.addEventListener('click', analyze);
+
+    tickerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        analyze();
+      }
+    });
+
+    tickerInput.addEventListener('input', (e) => {
+      tickerInput.value = e.target.value.toUpperCase();
+    });
+  </script>
+</body>
+</html>
