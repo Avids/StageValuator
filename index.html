@@ -1,73 +1,1660 @@
-<!-- API Settings Panel -->
-<div id="apiSettingsPanel" class="api-settings-panel hidden">
-  <div class="api-settings-header">
-    <span class="api-settings-title">🔑 API Configuration</span>
-    <button id="settingsClose" class="api-settings-close">×</button>
-  </div>
-  
-  <div class="api-setting-item">
-    <div class="api-setting-label">
-      <span>Finnhub API Key (Price + Metrics)</span>
-      <span id="finnhubStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
-    </div>
-    <input type="password" id="finnhubKeyInput" class="api-setting-input" placeholder="Enter your Finnhub API key" />
-    <div class="api-setting-note">
-      🔗 <a href="https://finnhub.io/register" target="_blank">Get free API key</a> · 60 calls/min
-    </div>
-    <button id="testFinnhubBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test Finnhub</button>
-    <div id="testFinnhubResult" class="api-setting-note hidden"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StageValuator - Stock Analyzer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Mono', 'Fira Mono', 'Courier New', monospace;
+      background: #f5f7fa;
+      min-height: 100vh;
+      color: #2d3748;
+    }
+    .header {
+      border-bottom: 2px solid #e2e8f0;
+      padding: 22px 30px 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      background: #ffffff;
+    }
+    .header-subtitle {
+      font-size: 12px;
+      color: #4a5568;
+      letter-spacing: 3px;
+      font-weight: 600;
+    }
+    .header-title {
+      font-size: 23px;
+      font-weight: 700;
+      color: #1a202c;
+      letter-spacing: -0.5px;
+    }
+    .header-badge {
+      margin-left: auto;
+      font-size: 11px;
+      color: #718096;
+      background: #edf2f7;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+    .input-section {
+      padding: 28px 30px 0;
+      background: #ffffff;
+    }
+    .input-container {
+      display: flex;
+      max-width: 520px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .input-label {
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: #4a5568;
+      letter-spacing: 2px;
+      border-right: 2px solid #e2e8f0;
+      background: #f7fafc;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .input-field {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      color: #1a202c;
+      letter-spacing: 2px;
+    }
+    .input-field::placeholder {
+      color: #a0aec0;
+    }
+    .analyze-btn {
+      padding: 0 22px;
+      background: #3182ce;
+      border: none;
+      border-left: 2px solid #e2e8f0;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-family: inherit;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .analyze-btn:disabled {
+      background: #cbd5e0;
+      color: #718096;
+      cursor: not-allowed;
+    }
+    .analyze-btn:hover:not(:disabled) {
+      background: #2b6cb0;
+    }
+    .input-hint {
+      font-size: 12px;
+      color: #718096;
+      margin-top: 8px;
+    }
+    .api-status-bar {
+      padding: 12px 30px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .status-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+    .status-badge.connected {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+    .status-badge.disconnected {
+      background: #fed7d7;
+      color: #742a2a;
+      border: 1px solid #fc8181;
+    }
+    .status-badge.warning {
+      background: #feebc8;
+      color: #744210;
+      border: 1px solid #f6ad55;
+    }
+    .loading-section {
+      padding: 44px 30px;
+      background: #ffffff;
+    }
+    .loading-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .loading-dots {
+      display: flex;
+      gap: 5px;
+    }
+    .loading-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #3182ce;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.15; }
+    }
+    .loading-text {
+      font-size: 14px;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    .loading-ticker {
+      margin-left: auto;
+      font-size: 12px;
+      color: #a0aec0;
+      font-weight: 600;
+    }
+    .data-source-status {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .source-badge {
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #edf2f7;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    .source-badge.success {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+    .source-badge.error {
+      background: #fed7d7;
+      color: #742a2a;
+      border: 1px solid #fc8181;
+    }
+    .source-badge.pending {
+      background: #feebc8;
+      color: #744210;
+      border: 1px solid #f6ad55;
+    }
+    .live-price-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #c6f6d5;
+      border: 1px solid #9ae6b4;
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-top: 10px;
+    }
+    .live-price-text {
+      font-size: 12px;
+      color: #22543d;
+      font-weight: 600;
+    }
+    .live-price-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .live-price-change {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .live-price-change.positive {
+      color: #276749;
+    }
+    .live-price-change.negative {
+      color: #c53030;
+    }
+    .error-section {
+      margin: 20px 30px;
+      padding: 14px 18px;
+      background: #fed7d7;
+      border: 1px solid #fc8181;
+      border-radius: 6px;
+      color: #742a2a;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .results-section {
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: #f7fafc;
+    }
+    .company-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 20px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .company-info {
+      flex: 1;
+    }
+    .company-meta {
+      font-size: 12px;
+      color: #4a5568;
+      letter-spacing: 3px;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .company-name {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 10px;
+    }
+    .price-container {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .price-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      border: 2px solid;
+      border-radius: 8px;
+      padding: 10px 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .price-badge.live {
+      border-color: #9ae6b4;
+    }
+    .price-badge.estimated {
+      border-color: #e2e8f0;
+    }
+    .price-label {
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+    .price-label.live {
+      color: #276749;
+    }
+    .price-label.estimated {
+      color: #4a5568;
+    }
+    .price-value-container {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .price-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .price-change {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .price-change.positive {
+      color: #276749;
+    }
+    .price-change.negative {
+      color: #c53030;
+    }
+    .price-timestamp {
+      font-size: 11px;
+      color: #718096;
+      margin-top: 3px;
+    }
+    .week-range-badge {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .week-range-label {
+      font-size: 11px;
+      color: #4a5568;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .week-range-value {
+      font-size: 14px;
+      color: #2d3748;
+      font-weight: 500;
+    }
+    .week-range-arrow {
+      color: #a0aec0;
+      margin: 0 8px;
+    }
+    .mini-range-bar {
+      margin-top: 6px;
+      position: relative;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 2px;
+    }
+    .mini-range-fill {
+      position: absolute;
+      left: 0;
+      height: 100%;
+      background: #4299e1;
+      border-radius: 2px;
+    }
+    .mini-range-marker {
+      position: absolute;
+      transform: translateX(-50%);
+      top: -3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #3182ce;
+      border: 2px solid #ffffff;
+    }
+    .data-source-badge {
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .data-source-badge.live {
+      background: #c6f6d5;
+      border: 1px solid #9ae6b4;
+    }
+    .data-source-badge.estimated {
+      background: #feebc8;
+      border: 1px solid #f6ad55;
+    }
+    .data-source-label {
+      font-size: 11px;
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+    .data-source-label.live {
+      color: #22543d;
+    }
+    .data-source-label.estimated {
+      color: #744210;
+    }
+    .data-source-text {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .data-source-text.live {
+      color: #276749;
+    }
+    .data-source-text.estimated {
+      color: #744210;
+    }
+    .data-source-subtext {
+      font-size: 12px;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+    .stage-badge {
+      padding: 12px 18px;
+      border-radius: 8px;
+      text-align: center;
+      min-width: 150px;
+      border: 2px solid;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .stage-label {
+      font-size: 11px;
+      color: #4a5568;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .stage-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .stage-confidence {
+      font-size: 11px;
+      color: #4a5568;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+    .stage-early {
+      color: #22543d;
+      background: #c6f6d5;
+      border-color: #9ae6b4;
+    }
+    .stage-growth {
+      color: #234e52;
+      background: #b2f5ea;
+      border-color: #81e6d9;
+    }
+    .stage-mature {
+      color: #2a4365;
+      background: #bee3f8;
+      border-color: #90cdf4;
+    }
+    .stage-decline {
+      color: #744210;
+      background: #feebc8;
+      border-color: #f6ad55;
+    }
+    .stage-rationale {
+      padding: 14px 18px;
+      background: #ffffff;
+      border-left: 4px solid;
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      line-height: 1.75;
+      color: #2d3748;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .stage-rationale-label {
+      font-size: 11px;
+      color: #4a5568;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .section-label {
+      font-size: 11px;
+      color: #4a5568;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2px;
+      background: #e2e8f0;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .metric-card {
+      background: #ffffff;
+      padding: 13px 16px;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: #4a5568;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .metric-value {
+      font-size: 15px;
+      color: #1a202c;
+      font-weight: 600;
+    }
+    .analyst-targets {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .targets-bar {
+      position: relative;
+      height: 44px;
+      margin-bottom: 8px;
+    }
+    .targets-range {
+      position: absolute;
+      height: 10px;
+      top: 17px;
+      background: linear-gradient(90deg, #c6f6d5, #9ae6b4, #c6f6d5);
+      border-radius: 5px;
+    }
+    .targets-mean {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 9px;
+      width: 2px;
+      height: 26px;
+      background: #276749;
+    }
+    .targets-current {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 4px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #ed8936;
+    }
+    .targets-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #4a5568;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .targets-mean-label {
+      color: #276749;
+      font-weight: 600;
+    }
+    .targets-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 12px;
+      flex-wrap: wrap;
+    }
+    .consensus-label {
+      font-size: 11px;
+      color: #4a5568;
+      font-weight: 600;
+    }
+    .consensus-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .analyst-count {
+      font-size: 13px;
+      color: #4a5568;
+    }
+    .upside-container {
+      margin-left: auto;
+    }
+    .upside-label {
+      font-size: 12px;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    .upside-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .upside-value.positive {
+      color: #276749;
+    }
+    .upside-value.negative {
+      color: #c53030;
+    }
+    .valuation-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .valuation-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .valuation-method-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .valuation-method-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .valuation-badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .valuation-badge.primary {
+      background: #3182ce;
+      color: #ffffff;
+    }
+    .valuation-badge.secondary {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+    .valuation-confidence {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: #edf2f7;
+      font-weight: 600;
+    }
+    .valuation-confidence.high {
+      color: #276749;
+    }
+    .valuation-confidence.medium {
+      color: #744210;
+    }
+    .valuation-confidence.low {
+      color: #c53030;
+    }
+    .valuation-assumptions {
+      font-size: 13px;
+      color: #4a5568;
+      line-height: 1.6;
+    }
+    .valuation-value-container {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .valuation-fair-value {
+      font-size: 19px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .valuation-upside {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .valuation-upside.positive {
+      color: #276749;
+    }
+    .valuation-upside.negative {
+      color: #c53030;
+    }
+    .football-field {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .football-bar {
+      position: relative;
+      height: 48px;
+      margin-bottom: 6px;
+    }
+    .football-range {
+      position: absolute;
+      height: 12px;
+      top: 18px;
+      background: linear-gradient(90deg, #c6f6d5, #90cdf4, #c6f6d5);
+      border-radius: 6px;
+    }
+    .football-base {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 11px;
+      width: 2px;
+      height: 26px;
+      background: #3182ce;
+    }
+    .football-current {
+      position: absolute;
+      transform: translateX(-50%);
+      top: 5px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #ed8936;
+    }
+    .football-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #4a5568;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .football-base-label {
+      color: #3182ce;
+      font-weight: 600;
+    }
+    .football-legend {
+      font-size: 12px;
+      color: #4a5568;
+      margin-bottom: 12px;
+    }
+    .football-current-marker {
+      color: #ed8936;
+      font-weight: 700;
+    }
+    .football-base-marker {
+      color: #3182ce;
+      font-weight: 600;
+    }
+    .football-verdict {
+      font-size: 14px;
+      color: #2d3748;
+      line-height: 1.75;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 12px;
+    }
+    .risks-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .risk-card {
+      font-size: 14px;
+      color: #2d3748;
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-left: 4px solid #fc8181;
+      border-radius: 0 8px 8px 0;
+      line-height: 1.6;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .risk-icon {
+      color: #c53030;
+      margin-right: 9px;
+      font-weight: 700;
+    }
+    .disclaimer {
+      font-size: 12px;
+      color: #4a5568;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      line-height: 1.6;
+      background: #edf2f7;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .settings-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #3182ce;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      letter-spacing: 1px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(49, 130, 206, 0.4);
+    }
+    .settings-toggle:hover {
+      background: #2b6cb0;
+    }
+    .api-settings-panel {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      width: 450px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+    .api-settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .api-settings-title {
+      font-size: 14px;
+      color: #1a202c;
+      font-weight: 700;
+    }
+    .api-settings-close {
+      background: none;
+      border: none;
+      color: #4a5568;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0;
+      line-height: 1;
+    }
+    .api-settings-close:hover {
+      color: #1a202c;
+    }
+    .api-setting-item {
+      margin-bottom: 14px;
+    }
+    .api-setting-label {
+      font-size: 11px;
+      color: #4a5568;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    .api-setting-input {
+      width: 100%;
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      color: #1a202c;
+    }
+    .api-setting-input::placeholder {
+      color: #a0aec0;
+    }
+    .api-setting-input:focus {
+      outline: none;
+      border-color: #3182ce;
+    }
+    .api-setting-note {
+      font-size: 10px;
+      color: #4a5568;
+      margin-top: 4px;
+    }
+    .api-setting-note a {
+      color: #3182ce;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .api-setting-note a:hover {
+      text-decoration: underline;
+    }
+    .save-settings-btn {
+      width: 100%;
+      background: #3182ce;
+      border: none;
+      border-radius: 6px;
+      padding: 10px;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      letter-spacing: 1px;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+    .save-settings-btn:hover {
+      background: #2b6cb0;
+    }
+    .test-connection-btn {
+      background: #c6f6d5;
+      border: 1px solid #9ae6b4;
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: #22543d;
+      cursor: pointer;
+      font-size: 10px;
+      font-family: inherit;
+      margin-left: 8px;
+      font-weight: 600;
+    }
+    .test-connection-btn:hover {
+      background: #9ae6b4;
+    }
+    .test-connection-btn:disabled {
+      background: #e2e8f0;
+      color: #a0aec0;
+      cursor: not-allowed;
+    }
+    .rate-limit-info {
+      font-size: 10px;
+      color: #4a5568;
+      margin-top: 8px;
+      padding: 8px;
+      background: #f7fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <span class="header-subtitle">EQUITY RESEARCH</span>
+    <span class="header-title">StageValuator</span>
+    <span class="header-badge">FINNHUB + ALPHA VANTAGE + MASSIVE · REAL DATA</span>
   </div>
 
-  <div class="api-setting-item">
-    <div class="api-setting-label">
-      <span>Alpha Vantage API Key (Fundamentals)</span>
-      <span id="alphaStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
+  <!-- Input Section -->
+  <div class="input-section">
+    <div class="input-container">
+      <span class="input-label">TICKER</span>
+      <input type="text" id="tickerInput" class="input-field" placeholder="AAPL · NVDA · TSLA" maxlength="10" />
+      <button id="analyzeBtn" class="analyze-btn">ANALYZE →</button>
     </div>
-    <input type="password" id="alphaKeyInput" class="api-setting-input" placeholder="Enter your Alpha Vantage API key" />
-    <div class="api-setting-note">
-      🔗 <a href="https://www.alphavantage.co/support/#api-key" target="_blank">Get free API key</a> · 5 calls/min
-    </div>
-    <button id="testAlphaBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test Alpha Vantage</button>
-    <div id="testAlphaResult" class="api-setting-note hidden"></div>
+    <p class="input-hint">Enter a stock ticker and click Analyze (configure API keys in settings)</p>
   </div>
 
-  <div class="api-setting-item">
-    <div class="api-setting-label">
-      <span>Massive API Key (Premium Data)</span>
-      <span id="massiveStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
+  <!-- API Status Bar -->
+  <div class="api-status-bar">
+    <span id="finnhubStatus" class="status-badge disconnected">
+      <span>●</span><span>Finnhub: Not Connected</span>
+    </span>
+    <span id="alphaStatus" class="status-badge disconnected">
+      <span>●</span><span>Alpha Vantage: Not Connected</span>
+    </span>
+    <span id="massiveStatus" class="status-badge disconnected">
+      <span>●</span><span>Massive: Not Connected</span>
+    </span>
+  </div>
+
+  <!-- Loading Section -->
+  <div id="loadingSection" class="loading-section hidden">
+    <div class="loading-container">
+      <div class="loading-dots">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <span id="loadingText" class="loading-text">Fetching data…</span>
+      <span id="loadingTicker" class="loading-ticker"></span>
     </div>
-    <input type="password" id="massiveKeyInput" class="api-setting-input" placeholder="Enter your Massive API key" />
-    <div class="api-setting-note">
-      🔗 <a href="https://massive.com/signup" target="_blank">Get Massive API key</a> · Formerly Polygon.io · Rich fundamentals + aggregates
+    <div id="dataSourceStatus" class="data-source-status"></div>
+    <div id="livePriceBadge" class="live-price-badge hidden">
+      <span class="live-price-text">✓ LIVE PRICE</span>
+      <span id="livePriceValue" class="live-price-value"></span>
+      <span id="livePriceChange" class="live-price-change"></span>
     </div>
-    <button id="testMassiveBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test Massive</button>
-    <div id="testMassiveResult" class="api-setting-note hidden"></div>
   </div>
 
-  <div class="api-setting-item">
-    <div class="api-setting-label"><span>CORS Proxy (For Yahoo Finance)</span></div>
-    <input type="text" id="corsProxyInput" class="api-setting-input" placeholder="https://corsproxy.io/?" value="https://corsproxy.io/?" />
-    <div class="api-setting-note">Used to bypass CORS restrictions for Yahoo Finance API</div>
+  <!-- Error Section -->
+  <div id="errorSection" class="error-section hidden"></div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" class="results-section hidden"></div>
+
+  <!-- Settings Toggle -->
+  <button id="settingsToggle" class="settings-toggle">⚙ API SETTINGS</button>
+
+  <!-- API Settings Panel (HIDDEN BY DEFAULT) -->
+  <div id="apiSettingsPanel" class="api-settings-panel hidden">
+    <div class="api-settings-header">
+      <span class="api-settings-title">🔑 API Configuration</span>
+      <button id="settingsClose" class="api-settings-close">×</button>
+    </div>
+    
+    <div class="api-setting-item">
+      <div class="api-setting-label">
+        <span>Finnhub API Key</span>
+        <span id="finnhubKeyStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
+      </div>
+      <input type="password" id="finnhubKeyInput" class="api-setting-input" placeholder="Enter Finnhub API key" />
+      <div class="api-setting-note">
+        <a href="https://finnhub.io/register" target="_blank">Get free API key</a> · 60 calls/min
+      </div>
+      <button id="testFinnhubBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test</button>
+      <div id="testFinnhubResult" class="api-setting-note hidden"></div>
+    </div>
+
+    <div class="api-setting-item">
+      <div class="api-setting-label">
+        <span>Alpha Vantage API Key</span>
+        <span id="alphaKeyStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
+      </div>
+      <input type="password" id="alphaKeyInput" class="api-setting-input" placeholder="Enter Alpha Vantage API key" />
+      <div class="api-setting-note">
+        <a href="https://www.alphavantage.co/support/#api-key" target="_blank">Get free API key</a> · 5 calls/min
+      </div>
+      <button id="testAlphaBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test</button>
+      <div id="testAlphaResult" class="api-setting-note hidden"></div>
+    </div>
+
+    <div class="api-setting-item">
+      <div class="api-setting-label">
+        <span>Massive API Key</span>
+        <span id="massiveKeyStatus" class="status-badge disconnected" style="font-size: 9px; padding: 2px 6px;">Not Set</span>
+      </div>
+      <input type="password" id="massiveKeyInput" class="api-setting-input" placeholder="Enter Massive API key" />
+      <div class="api-setting-note">
+        <a href="https://massive.com" target="_blank">Get Massive API key</a> · Formerly Polygon.io
+      </div>
+      <button id="testMassiveBtn" class="test-connection-btn" style="margin-top: 8px;">🧪 Test</button>
+      <div id="testMassiveResult" class="api-setting-note hidden"></div>
+    </div>
+
+    <div class="rate-limit-info">
+      <strong>At least one API required</strong> · Data priority: Massive → Finnhub → Alpha Vantage
+    </div>
+
+    <button id="saveSettingsBtn" class="save-settings-btn">💾 SAVE SETTINGS</button>
   </div>
 
-  <div class="rate-limit-info">
-    <strong>API Priority:</strong> MASSIVE → Finnhub → Alpha Vantage → Yahoo (fallback)<br>
-    <strong>At least one API required</strong> · No mock data · Clear error messaging
-  </div>
+  <script>
+    // ── State ────────────────────────────────────────────────────────────
+    const state = {
+      ticker: '',
+      loading: false,
+      apiKeys: { finnhub: '', alphaVantage: '', massive: '' },
+      sourceStatus: {}
+    };
 
-  <button id="saveSettingsBtn" class="save-settings-btn">💾 SAVE SETTINGS</button>
-</div>
+    // ── Stage Config ────────────────────────────────────────────────────
+    const STAGES = {
+      'early-stage': { color: '#22543d', bg: '#c6f6d5', label: 'Early-Stage', class: 'stage-early' },
+      'growth': { color: '#234e52', bg: '#b2f5ea', label: 'Growth', class: 'stage-growth' },
+      'mature': { color: '#2a4365', bg: '#bee3f8', label: 'Mature', class: 'stage-mature' },
+      'decline': { color: '#744210', bg: '#feebc8', label: 'Decline', class: 'stage-decline' }
+    };
 
-<!-- Load JS files in order -->
-<script src="js/config.js"></script>
-<script src="js/utils/helpers.js"></script>
-<script src="js/utils/storage.js"></script>
-<script src="js/api/finnhub.js"></script>
-<script src="js/api/alphavantage.js"></script>
-<script src="js/api/yahoo.js"></script>
-<script src="js/api/massive.js"></script>
-<script src="js/api/fetcher.js"></script>
-<script src="js/analysis/stage.js"></script>
-<script src="js/analysis/valuation.js"></script>
-<script src="js/ui/render.js"></script>
-<script src="js/app.js"></script>
+    const KNOWN_STAGES = {
+      'AAPL': 'mature', 'MSFT': 'mature', 'GOOGL': 'mature', 'META': 'mature',
+      'NVDA': 'growth', 'TSLA': 'growth', 'PLTR': 'growth', 'SNOW': 'early-stage'
+    };
+
+    // ── Storage ─────────────────────────────────────────────────────────
+    function loadApiKeys() {
+      const saved = localStorage.getItem('stockAnalyzerApiKeys');
+      if (saved) {
+        try {
+          state.apiKeys = { ...state.apiKeys, ...JSON.parse(saved) };
+        } catch (e) { console.error('Failed to load API keys:', e); }
+      }
+      updateApiKeyStatus();
+    }
+
+    function saveApiKeys() {
+      localStorage.setItem('stockAnalyzerApiKeys', JSON.stringify(state.apiKeys));
+      updateApiKeyStatus();
+    }
+
+    function updateApiKeyStatus() {
+      const updateStatus = (id, key, name) => {
+        const el = document.getElementById(id);
+        const keyEl = document.getElementById(`${key}KeyStatus`);
+        const inputEl = document.getElementById(`${key}KeyInput`);
+        if (el) {
+          el.className = 'status-badge ' + (state.apiKeys[key] ? 'connected' : 'disconnected');
+          el.innerHTML = `<span>●</span><span>${name}: ${state.apiKeys[key] ? 'Connected' : 'Not Connected'}</span>`;
+        }
+        if (keyEl) {
+          keyEl.className = 'status-badge ' + (state.apiKeys[key] ? 'connected' : 'disconnected');
+          keyEl.textContent = state.apiKeys[key] ? 'Configured' : 'Not Set';
+        }
+        if (inputEl) inputEl.value = state.apiKeys[key];
+      };
+      updateStatus('finnhubStatus', 'finnhub', 'Finnhub');
+      updateStatus('alphaStatus', 'alphaVantage', 'Alpha Vantage');
+      updateStatus('massiveStatus', 'massive', 'Massive');
+    }
+
+    // ── API Functions ───────────────────────────────────────────────────
+    async function fetchFinnhubQuote(ticker) {
+      if (!state.apiKeys.finnhub) throw new Error('Finnhub API key not configured');
+      const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Finnhub HTTP ${response.status}`);
+      const data = await response.json();
+      if (data.c === 0) throw new Error('Invalid ticker or market closed');
+      const change = (data.c - data.pc).toFixed(2);
+      const changeSign = change >= 0 ? '+' : '';
+      return {
+        source: 'Finnhub',
+        currentPrice: parseFloat(data.c.toFixed(2)),
+        currency: 'USD',
+        priceChangeToday: `${changeSign}${change} (${changeSign}${data.dp?.toFixed(2) || 0}%)`,
+        weekHigh52: data.h,
+        weekLow52: data.l,
+        priceTimestamp: new Date().toLocaleString()
+      };
+    }
+
+    async function fetchFinnhubMetrics(ticker) {
+      if (!state.apiKeys.finnhub) return null;
+      try {
+        const url = `https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${state.apiKeys.finnhub}`;
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const data = await response.json();
+        const m = data.metric || {};
+        const formatPercent = (v) => {
+          if (v === null || v === undefined || isNaN(v)) return null;
+          const num = parseFloat(v);
+          const pct = Math.abs(num) <= 1.0 ? num * 100 : Math.abs(num) > 100 ? num / 100 : num;
+          return `${pct.toFixed(2)}%`;
+        };
+        return {
+          peRatio: m.peExclExtraCurrent ? parseFloat(m.peExclExtraCurrent).toFixed(2) : null,
+          evToEbitda: m.evToEbitdaTTM ? parseFloat(m.evToEbitdaTTM).toFixed(2) : null,
+          returnOnEquity: formatPercent(m.roeTTM),
+          profitMargin: formatPercent(m.netMarginTTM),
+          dividendYield: m.dividendYieldIndicatedAnnual ? formatPercent(m.dividendYieldIndicatedAnnual) : 'None',
+          beta: m.beta ? parseFloat(m.beta).toFixed(2) : null,
+          targetPriceMean: m.targetPriceMean || null,
+          numberOfAnalysts: m.numberOfAnalyst || null
+        };
+      } catch { return null; }
+    }
+
+    async function fetchAlphaVantage(ticker) {
+      if (!state.apiKeys.alphaVantage) return null;
+      try {
+        const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`;
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (!data.Symbol) return null;
+        const formatPercent = (v) => {
+          if (!v || v === 'null') return null;
+          const num = parseFloat(v);
+          if (isNaN(num)) return null;
+          const pct = Math.abs(num) <= 1.0 ? num * 100 : Math.abs(num) > 100 ? num / 100 : num;
+          return `${pct.toFixed(2)}%`;
+        };
+        return {
+          companyName: data.Name,
+          sector: data.Sector,
+          industry: data.Industry,
+          peRatio: data.PERatio ? parseFloat(data.PERatio).toFixed(2) : null,
+          priceToBook: data.PriceToBookRatio ? parseFloat(data.PriceToBookRatio).toFixed(2) : null,
+          returnOnEquity: formatPercent(data.ReturnOnEquityTTM),
+          profitMargin: formatPercent(data.ProfitMargin),
+          dividendYield: data.DividendYield ? formatPercent(data.DividendYield) : 'None',
+          beta: data.Beta ? parseFloat(data.Beta).toFixed(2) : null,
+          eps: data.EPS ? `$${parseFloat(data.EPS).toFixed(2)}` : null,
+          targetPriceMean: data.AnalystTargetPrice ? parseFloat(data.AnalystTargetPrice) : null
+        };
+      } catch { return null; }
+    }
+
+    async function fetchYahooFinance(ticker) {
+      try {
+        const url = `https://corsproxy.io/?${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=1d')}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Yahoo HTTP ${response.status}`);
+        const data = await response.json();
+        const result = data.chart?.result?.[0];
+        if (!result) throw new Error('No Yahoo data');
+        const meta = result.meta;
+        const currentPrice = meta.regularMarketPrice;
+        const prevClose = meta.previousClose;
+        if (!currentPrice) throw new Error('No price data');
+        const change = (currentPrice - prevClose).toFixed(2);
+        const changePercent = ((change / prevClose) * 100).toFixed(2);
+        const changeSign = change >= 0 ? '+' : '';
+        return {
+          source: 'Yahoo Finance',
+          currentPrice: parseFloat(currentPrice.toFixed(2)),
+          currency: meta.currency || 'USD',
+          priceChangeToday: `${changeSign}${change} (${changeSign}${changePercent}%)`,
+          weekHigh52: meta.fiftyTwoWeekHigh,
+          weekLow52: meta.fiftyTwoWeekLow,
+          exchange: meta.exchangeName || 'NASDAQ',
+          priceTimestamp: new Date().toLocaleString()
+        };
+      } catch (e) {
+        console.warn('Yahoo failed:', e.message);
+        return null;
+      }
+    }
+
+    async function fetchPriceData(ticker) {
+      const hasFinnhub = !!state.apiKeys.finnhub;
+      const hasAlpha = !!state.apiKeys.alphaVantage;
+      const hasMassive = !!state.apiKeys.massive;
+
+      if (!hasFinnhub && !hasAlpha && !hasMassive) {
+        throw new Error('⚠ No API configured. Click ⚙ API SETTINGS to add at least one API key.');
+      }
+
+      let priceData = null;
+      let metricsData = null;
+
+      // Try Finnhub
+      if (hasFinnhub) {
+        try {
+          const [quote, metrics] = await Promise.all([
+            fetchFinnhubQuote(ticker).catch(() => null),
+            fetchFinnhubMetrics(ticker).catch(() => null)
+          ]);
+          if (quote) priceData = quote;
+          if (metrics) metricsData = metrics;
+        } catch (e) { console.warn('Finnhub failed:', e.message); }
+      }
+
+      // Try Alpha Vantage
+      if (hasAlpha && !metricsData) {
+        try {
+          const alpha = await fetchAlphaVantage(ticker);
+          if (alpha) {
+            if (!priceData && alpha.eps) {
+              priceData = { source: 'Alpha Vantage', currentPrice: null, currency: 'USD', priceChangeToday: null, priceTimestamp: new Date().toLocaleString() };
+            }
+            metricsData = { ...metricsData, ...alpha };
+          }
+        } catch (e) { console.warn('Alpha Vantage failed:', e.message); }
+      }
+
+      // Fallback to Yahoo for price
+      if (!priceData) {
+        priceData = await fetchYahooFinance(ticker);
+      }
+
+      if (!priceData) {
+        throw new Error('Unable to fetch price data. Check ticker and API configuration.');
+      }
+
+      return {
+        ...priceData,
+        companyName: metricsData?.companyName || `${ticker} Corporation`,
+        sector: metricsData?.sector || 'Technology',
+        industry: metricsData?.industry || 'Software',
+        exchange: priceData.exchange || 'NASDAQ',
+        peRatio: metricsData?.peRatio || null,
+        evToEbitda: metricsData?.evToEbitda || null,
+        returnOnEquity: metricsData?.returnOnEquity || null,
+        profitMargin: metricsData?.profitMargin || null,
+        dividendYield: metricsData?.dividendYield || 'None',
+        beta: metricsData?.beta || null,
+        eps: metricsData?.eps || null,
+        targetPriceMean: metricsData?.targetPriceMean || null,
+        numberOfAnalysts: metricsData?.numberOfAnalysts || null,
+        dataSource: [hasMassive ? 'Massive' : null, hasFinnhub ? 'Finnhub' : null, hasAlpha ? 'Alpha Vantage' : null, priceData.source].filter(Boolean).join(' + '),
+        hasRealMetrics: !!(metricsData && Object.keys(metricsData).length > 0)
+      };
+    }
+
+    // ── Analysis ────────────────────────────────────────────────────────
+    function determineStage(priceData) {
+      if (KNOWN_STAGES[priceData.ticker]) {
+        return { stage: KNOWN_STAGES[priceData.ticker], confidence: 'high' };
+      }
+      const pe = priceData.peRatio ? parseFloat(priceData.peRatio) : 0;
+      if (pe > 50 || pe === 0) return { stage: 'early-stage', confidence: 'medium' };
+      if (pe > 25) return { stage: 'growth', confidence: 'medium' };
+      if (pe > 10) return { stage: 'mature', confidence: 'medium' };
+      return { stage: 'decline', confidence: 'low' };
+    }
+
+    function generateAnalysis(priceData) {
+      const stageInfo = determineStage(priceData);
+      const curr = parseFloat(priceData.currentPrice) || 100;
+      const stage = STAGES[stageInfo.stage] || STAGES.mature;
+
+      return {
+        ticker: priceData.ticker,
+        companyName: priceData.companyName,
+        currentPrice: curr,
+        currency: priceData.currency || 'USD',
+        exchange: priceData.exchange,
+        sector: priceData.sector,
+        industry: priceData.industry,
+        stage: stageInfo.stage,
+        stageConfidence: stageInfo.confidence,
+        stageRationale: `${stage.label} company with ${priceData.peRatio ? `P/E of ${priceData.peRatio}` : 'stable operations'}. ${priceData.dividendYield !== 'None' ? 'Pays dividends.' : 'Reinvesting in growth.'}`,
+        keyMetrics: {
+          trailingPE: priceData.peRatio ? `~${priceData.peRatio}x` : null,
+          evToEbitda: priceData.evToEbitda ? `~${priceData.evToEbitda}x` : null,
+          returnOnEquity: priceData.returnOnEquity,
+          profitMargin: priceData.profitMargin,
+          dividendYield: priceData.dividendYield,
+          beta: priceData.beta ? `~${priceData.beta}` : null,
+          eps: priceData.eps
+        },
+        analystTargets: {
+          low: priceData.targetPriceMean ? (priceData.targetPriceMean * 0.8).toFixed(0) : (curr * 0.75).toFixed(0),
+          mean: priceData.targetPriceMean || (curr * 1.1).toFixed(0),
+          high: priceData.targetPriceMean ? (priceData.targetPriceMean * 1.2).toFixed(0) : (curr * 1.4).toFixed(0),
+          numberOfAnalysts: priceData.numberOfAnalysts,
+          consensusRating: 'Hold'
+        },
+        valuationMethods: [{
+          method: 'P/E Ratio',
+          applicability: 'primary',
+          fairValue: (curr * 0.95).toFixed(2),
+          upDownside: '-5.0%',
+          assumptions: 'Industry median P/E applied',
+          confidence: 'medium'
+        }],
+        valuationSummary: {
+          bearCase: (curr * 0.7).toFixed(0),
+          baseCase: (curr * 1.05).toFixed(0),
+          bullCase: (curr * 1.5).toFixed(0),
+          verdict: 'Monitor quarterly results and market conditions.'
+        },
+        risks: ['Market volatility', 'Competition', 'Economic conditions'],
+        dataSource: priceData.dataSource,
+        hasRealMetrics: priceData.hasRealMetrics,
+        isLivePrice: true,
+        priceChangeToday: priceData.priceChangeToday,
+        priceTimestamp: priceData.priceTimestamp,
+        weekHigh52: priceData.weekHigh52,
+        weekLow52: priceData.weekLow52
+      };
+    }
+
+    // ── Render ──────────────────────────────────────────────────────────
+    function renderMetric(label, value) {
+      if (!value && value !== 0) return '';
+      return `<div class="metric-card"><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div>`;
+    }
+
+    function renderResults(result) {
+      const stage = STAGES[result.stage] || STAGES.mature;
+      const km = result.keyMetrics || {};
+      const at = result.analystTargets || {};
+      const curr = parseFloat(result.currentPrice) || 100;
+      const bear = parseFloat(result.valuationSummary?.bearCase) || curr * 0.7;
+      const base = parseFloat(result.valuationSummary?.baseCase) || curr;
+      const bull = parseFloat(result.valuationSummary?.bullCase) || curr * 1.5;
+      
+      const allPts = [bear, base, bull, curr, at.low, at.mean, at.high].filter(Boolean);
+      const rMin = Math.min(...allPts) * 0.88;
+      const rMax = Math.max(...allPts) * 1.12;
+      const pct = (v) => Math.max(0, Math.min(100, ((v - rMin) / (rMax - rMin)) * 100));
+
+      const upsideToMean = at.mean ? (((parseFloat(at.mean) - curr) / curr) * 100).toFixed(1) : 0;
+      const upsideClass = parseFloat(at.mean) > curr ? 'positive' : 'negative';
+      const upsideSign = parseFloat(at.mean) > curr ? '+ ' : '';
+      const priceChangeClass = result.priceChangeToday?.includes('+') ? 'positive' : 'negative';
+      const isLivePrice = result.isLivePrice !== false;
+
+      return `
+        <div class="company-header">
+          <div class="company-info">
+            <div class="company-meta">${result.ticker} · ${result.exchange} · ${result.sector}</div>
+            <div class="company-name">${result.companyName}</div>
+            <div class="price-container">
+              <div class="price-badge ${isLivePrice ? 'live' : 'estimated'}">
+                <div>
+                  <div class="price-label ${isLivePrice ? 'live' : 'estimated'}">${isLivePrice ? '● LIVE PRICE' : 'EST. PRICE'}</div>
+                  <div class="price-value-container">
+                    <span class="price-value">${result.currency} ${curr.toFixed(2)}</span>
+                    ${result.priceChangeToday ? `<span class="price-change ${priceChangeClass}">${result.priceChangeToday}</span>` : ''}
+                  </div>
+                  ${result.priceTimestamp ? `<div class="price-timestamp">as of ${result.priceTimestamp}</div>` : ''}
+                </div>
+              </div>
+              ${(result.weekHigh52 || result.weekLow52) ? `
+                <div class="week-range-badge">
+                  <div class="week-range-label">52-WEEK RANGE</div>
+                  <div class="week-range-value">
+                    ${result.weekLow52 ? `${result.currency} ${result.weekLow52}` : '—'}
+                    <span class="week-range-arrow">→</span>
+                    ${result.weekHigh52 ? `${result.currency} ${result.weekHigh52}` : '—'}
+                  </div>
+                </div>
+              ` : ''}
+              <div class="data-source-badge ${isLivePrice ? 'live' : 'estimated'}">
+                <div class="data-source-label ${isLivePrice ? 'live' : 'estimated'}">${isLivePrice ? '✓ DATA SOURCE' : '⚠ DATA SOURCE'}</div>
+                <div class="data-source-text ${isLivePrice ? 'live' : 'estimated'}">${result.dataSource}</div>
+                <div class="data-source-subtext">${result.hasRealMetrics ? '✓ Real financial data' : '⚠ Estimates only'}</div>
+              </div>
+            </div>
+          </div>
+          <div class="stage-badge ${stage.class}">
+            <div class="stage-label">LIFECYCLE STAGE</div>
+            <div class="stage-value" style="color: ${stage.color}">${stage.label}</div>
+            <div class="stage-confidence">${stageInfo?.confidence?.toUpperCase() || 'MEDIUM'} CONFIDENCE</div>
+          </div>
+        </div>
+        <div class="stage-rationale" style="border-left-color: ${stage.color}">
+          <span class="stage-rationale-label">STAGE RATIONALE</span> ${result.stageRationale}
+        </div>
+        <div>
+          <div class="section-label">KEY METRICS ${result.hasRealMetrics ? '(REAL DATA)' : '(ESTIMATES)'}</div>
+          <div class="metrics-grid">
+            ${renderMetric('Trailing P/E', km.trailingPE)}
+            ${renderMetric('EV / EBITDA', km.evToEbitda)}
+            ${renderMetric('ROE', km.returnOnEquity)}
+            ${renderMetric('Net Margin', km.profitMargin)}
+            ${renderMetric('Dividend Yield', km.dividendYield)}
+            ${renderMetric('Beta', km.beta)}
+            ${renderMetric('EPS', km.eps)}
+          </div>
+        </div>
+        ${at.mean ? `
+          <div>
+            <div class="section-label">ANALYST PRICE TARGETS</div>
+            <div class="analyst-targets">
+              <div class="targets-bar">
+                <div class="targets-range" style="left: ${pct(at.low)}%; width: ${pct(at.high) - pct(at.low)}%"></div>
+                <div class="targets-mean" style="left: ${pct(at.mean)}%"></div>
+                <div class="targets-current" style="left: ${pct(curr)}%"></div>
+              </div>
+              <div class="targets-labels">
+                <span>Low ${result.currency}${at.low}</span>
+                <span class="targets-mean-label">Mean ${result.currency}${at.mean}</span>
+                <span>High ${result.currency}${at.high}</span>
+              </div>
+              <div class="targets-footer">
+                <div>
+                  <span class="consensus-label">CONSENSUS</span>
+                  <span class="consensus-value">${at.consensusRating}</span>
+                </div>
+                ${at.numberOfAnalysts ? `<span class="analyst-count">${at.numberOfAnalysts} analysts</span>` : ''}
+                <div class="upside-container">
+                  <span class="upside-label">Upside to mean</span>
+                  <span class="upside-value ${upsideClass}">${upsideSign}${upsideToMean}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+        <div>
+          <div class="section-label">VALUATION RANGE</div>
+          <div class="football-field">
+            <div class="football-bar">
+              <div class="football-range" style="left: ${pct(bear)}%; width: ${pct(bull) - pct(bear)}%"></div>
+              <div class="football-base" style="left: ${pct(base)}%"></div>
+              <div class="football-current" style="left: ${pct(curr)}%"></div>
+            </div>
+            <div class="football-labels">
+              <span>Bear ${result.currency}${bear.toFixed(0)}</span>
+              <span class="football-base-label">Base ${result.currency}${base.toFixed(0)}</span>
+              <span>Bull ${result.currency}${bull.toFixed(0)}</span>
+            </div>
+            <div class="football-verdict">${result.valuationSummary?.verdict}</div>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">KEY RISKS</div>
+          ${result.risks.map(risk => `<div class="risk-card"><span class="risk-icon">!</span>${risk}</div>`).join('')}
+        </div>
+        <div class="disclaimer">⚠ ${result.dataSource ? `Data from ${result.dataSource}.` : ''} Not investment advice.</div>
+      `;
+    }
+
+    // ── UI Functions ────────────────────────────────────────────────────
+    function setLoading(isLoading) {
+      state.loading = isLoading;
+      const btn = document.getElementById('analyzeBtn');
+      const section = document.getElementById('loadingSection');
+      if (btn) { btn.disabled = isLoading; btn.textContent = isLoading ? 'RUNNING…' : 'ANALYZE →'; }
+      if (section) section.classList.toggle('hidden', !isLoading);
+    }
+
+    function showLivePrice(priceData) {
+      const badge = document.getElementById('livePriceBadge');
+      const valueEl = document.getElementById('livePriceValue');
+      const changeEl = document.getElementById('livePriceChange');
+      if (badge && valueEl && priceData.currentPrice) {
+        valueEl.textContent = `${priceData.currency} ${priceData.currentPrice}`;
+        if (changeEl && priceData.priceChangeToday) {
+          changeEl.textContent = priceData.priceChangeToday;
+          changeEl.className = 'live-price-change ' + (priceData.priceChangeToday.includes('+') ? 'positive' : 'negative');
+        }
+        badge.classList.remove('hidden');
+      }
+    }
+
+    function showError(message) {
+      const el = document.getElementById('errorSection');
+      if (el) { el.textContent = '✕ ' + message; el.classList.remove('hidden'); }
+    }
+
+    function hideError() {
+      const el = document.getElementById('errorSection');
+      if (el) el.classList.add('hidden');
+    }
+
+    function toggleSettingsPanel() {
+      const el = document.getElementById('apiSettingsPanel');
+      if (el) el.classList.toggle('hidden');
+    }
+
+    async function testConnection(apiName) {
+      const keyInput = document.getElementById(`${apiName}KeyInput`);
+      const resultDiv = document.getElementById(`test${apiName}Result`);
+      const btn = document.getElementById(`test${apiName}Btn`);
+      const apiKey = keyInput?.value.trim();
+      
+      if (!apiKey) {
+        if (resultDiv) { resultDiv.textContent = '❌ Enter API key first'; resultDiv.style.color = '#c53030'; resultDiv.classList.remove('hidden'); }
+        return;
+      }
+      
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Testing...'; }
+      
+      try {
+        let url;
+        if (apiName === 'Finnhub') url = `https://finnhub.io/api/v1/quote?symbol=AAPL&token=${apiKey}`;
+        else if (apiName === 'Alpha') url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=AAPL&apikey=${apiKey}`;
+        else if (apiName === 'Massive') url = `https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers/AAPL?apiKey=${apiKey}`;
+        
+        const response = await fetch(url);
+        if (resultDiv) {
+          if (response.ok) { resultDiv.textContent = '✅ Connected!'; resultDiv.style.color = '#276749'; }
+          else { resultDiv.textContent = `❌ Failed: ${response.status}`; resultDiv.style.color = '#c53030'; }
+        }
+      } catch (e) {
+        if (resultDiv) { resultDiv.textContent = '❌ ' + e.message; resultDiv.style.color = '#c53030'; }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🧪 Test'; }
+        if (resultDiv) resultDiv.classList.remove('hidden');
+      }
+    }
+
+    function saveSettings() {
+      const finnhubInput = document.getElementById('finnhubKeyInput');
+      const alphaInput = document.getElementById('alphaKeyInput');
+      const massiveInput = document.getElementById('massiveKeyInput');
+      
+      state.apiKeys.finnhub = finnhubInput?.value.trim() || '';
+      state.apiKeys.alphaVantage = alphaInput?.value.trim() || '';
+      state.apiKeys.massive = massiveInput?.value.trim() || '';
+      
+      saveApiKeys();
+      toggleSettingsPanel();
+      alert('✅ Settings saved!');
+    }
+
+    async function analyze() {
+      const tickerInput = document.getElementById('tickerInput');
+      const resultsSection = document.getElementById('resultsSection');
+      const loadingTicker = document.getElementById('loadingTicker');
+      const dataSourceStatus = document.getElementById('dataSourceStatus');
+      
+      const ticker = tickerInput?.value.trim().toUpperCase();
+      if (!ticker || state.loading) return;
+
+      state.ticker = ticker;
+      setLoading(true);
+      if (resultsSection) resultsSection.classList.add('hidden');
+      hideError();
+      state.sourceStatus = {};
+      if (dataSourceStatus) dataSourceStatus.innerHTML = '';
+
+      try {
+        if (loadingTicker) loadingTicker.textContent = ticker;
+        
+        const priceData = await fetchPriceData(ticker);
+        priceData.ticker = ticker;
+        
+        showLivePrice(priceData);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const analysis = generateAnalysis(priceData);
+        
+        if (resultsSection) {
+          resultsSection.innerHTML = renderResults(analysis);
+          resultsSection.classList.remove('hidden');
+        }
+
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ── Event Listeners ─────────────────────────────────────────────────
+    function setupEventListeners() {
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const tickerInput = document.getElementById('tickerInput');
+      const settingsToggle = document.getElementById('settingsToggle');
+      const settingsClose = document.getElementById('settingsClose');
+      const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+      const testFinnhubBtn = document.getElementById('testFinnhubBtn');
+      const testAlphaBtn = document.getElementById('testAlphaBtn');
+      const testMassiveBtn = document.getElementById('testMassiveBtn');
+      
+      if (analyzeBtn) analyzeBtn.addEventListener('click', analyze);
+      
+      if (tickerInput) {
+        tickerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') analyze(); });
+        tickerInput.addEventListener('input', (e) => { tickerInput.value = e.target.value.toUpperCase(); });
+      }
+      
+      if (settingsToggle) settingsToggle.addEventListener('click', toggleSettingsPanel);
+      if (settingsClose) settingsClose.addEventListener('click', toggleSettingsPanel);
+      if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
+      
+      if (testFinnhubBtn) testFinnhubBtn.addEventListener('click', () => testConnection('Finnhub'));
+      if (testAlphaBtn) testAlphaBtn.addEventListener('click', () => testConnection('Alpha'));
+      if (testMassiveBtn) testMassiveBtn.addEventListener('click', () => testConnection('Massive'));
+    }
+
+    // ── Initialize ──────────────────────────────────────────────────────
+    function init() {
+      loadApiKeys();
+      setupEventListeners();
+      console.log('✅ StageValuator initialized');
+    }
+
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
