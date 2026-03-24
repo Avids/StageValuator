@@ -18,31 +18,22 @@
   <div class="input-section">
     <div class="input-container">
       <span class="input-label">TICKER</span>
-      <input 
-        type="text" 
-        id="tickerInput" 
-        class="input-field" 
-        placeholder="AAPL · NVDA · TSLA · MSFT"
-        maxlength="10"
-      />
+      <input type="text" id="tickerInput" class="input-field" placeholder="AAPL · NVDA · TSLA · MSFT" maxlength="10" />
       <button id="analyzeBtn" class="analyze-btn">ANALYZE →</button>
     </div>
-    <p class="input-hint">Live price from Finnhub API · Yahoo Finance fallback · AI valuation analysis</p>
+    <p class="input-hint">Live price from Finnhub API · Yahoo Finance fallback · Real financial metrics</p>
   </div>
 
   <!-- API Status Bar -->
   <div class="api-status-bar">
     <span id="finnhubStatus" class="status-badge disconnected">
-      <span>●</span>
-      <span>Finnhub: Not Connected</span>
+      <span>●</span><span>Finnhub: Not Connected</span>
     </span>
     <span id="yahooStatus" class="status-badge connected">
-      <span>●</span>
-      <span>Yahoo Finance: Available</span>
+      <span>●</span><span>Yahoo Finance: Available</span>
     </span>
     <span id="rateLimitStatus" class="status-badge warning hidden">
-      <span>⚠</span>
-      <span>Rate Limit: --/--</span>
+      <span>⚠</span><span>Rate Limit: --/--</span>
     </span>
   </div>
 
@@ -96,9 +87,7 @@
     </div>
 
     <div class="api-setting-item">
-      <div class="api-setting-label">
-        <span>CORS Proxy (For Yahoo Finance)</span>
-      </div>
+      <div class="api-setting-label"><span>CORS Proxy (For Yahoo Finance)</span></div>
       <input type="text" id="corsProxyInput" class="api-setting-input" placeholder="https://corsproxy.io/?" value="https://corsproxy.io/?" />
       <div class="api-setting-note">Used to bypass CORS restrictions for Yahoo Finance API</div>
     </div>
@@ -106,12 +95,17 @@
     <div class="rate-limit-info">
       <strong>Finnhub Free Tier:</strong> 60 API calls/minute · 30 calls/second<br>
       <strong>Yahoo Finance:</strong> Unlimited (via CORS proxy) · Fallback when Finnhub unavailable<br>
-      <strong>Available Data:</strong> Price, 52-week range, Company profile, Financial metrics, Analyst targets
+      <strong>Metrics:</strong> P/E, EV/EBITDA, ROE, Margins, Beta from Finnhub (REAL DATA)
     </div>
 
     <button id="saveSettingsBtn" class="save-settings-btn">💾 SAVE SETTINGS</button>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Load JS files in order -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
