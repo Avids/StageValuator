@@ -36,6 +36,10 @@ function renderResults(result) {
     : `Price: ${result.dataSource} · Metrics: Estimates`;
 
   return `
+    <div class="results-toolbar">
+      <button id="exportPdfBtn" class="export-pdf-btn" type="button">EXPORT PDF</button>
+    </div>
+
     <div class="company-header">
       <div class="company-info">
         <div class="company-meta">
