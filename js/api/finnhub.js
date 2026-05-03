@@ -127,9 +127,7 @@ async function fetchFinnhubMetrics(ticker) {
       returnOnEquity: formatPercent(metric.roeTTM, 2),
       profitMargin: formatPercent(metric.netMarginTTM, 2),
       operatingMargin: formatPercent(metric.operMarginTTM, 2),
-      dividendYield: metric.dividendYieldIndicatedAnnual !== null
-        ? formatPercent(metric.dividendYieldIndicatedAnnual, 2)
-        : 'None',
+      dividendYield: normalizeDividendYield(metric.dividendYieldIndicatedAnnual, 'finnhub'),
       fcfYield: metric.freeCashFlowPerShareTTM && metric.priceLastClose
         ? `${((metric.freeCashFlowPerShareTTM / metric.priceLastClose) * 100).toFixed(2)}%`
         : null,

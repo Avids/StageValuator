@@ -20,6 +20,54 @@ function formatMarketCap(value) {
   return '$' + num.toFixed(2);
 }
 
+function normalizeDividendYield(value, source = '') {
+  if (value === null || value === undefined || value === '' || value === 'None' || value === 'null') {
+    return 'None';
+  }
+
+  let raw = value;
+  if (typeof raw === 'string') {
+    raw = raw.replace('%', '').trim();
+  }
+
+  const num = parseFloat(raw);
+  if (isNaN(num) || num <= 0) return 'None';
+
+  let percent = num;
+
+  // Alpha Vantage reports DividendYield as a decimal fraction.
+  if (source === 'alphaVantage') {
+    percent = num * 100;
+  } else if (num <= 1) {
+    percent = num * 100;
+  }
+
+  // Common-stock dividend yields above this are usually formatting/provider
+  // errors in this app's data sources, not usable valuation inputs.
+  if (percent > 15) return 'None';
+
+  return `${percent.toFixed(2)}%`;
+}
+
+function chooseDividendYield(candidates = [], fallback = null) {
+  const priority = {
+    alphaVantage: 1,
+    finnhub: 2,
+    massive: 3
+  };
+
+  const normalized = candidates
+    .map((candidate) => ({
+      source: candidate.source,
+      value: normalizeDividendYield(candidate.value, candidate.source)
+    }))
+    .filter((candidate) => candidate.value !== 'None')
+    .sort((a, b) => (priority[a.source] || 99) - (priority[b.source] || 99));
+
+  if (normalized.length > 0) return normalized[0].value;
+  return normalizeDividendYield(fallback);
+}
+
 function updateSourceStatus(source, status) {
   state.sourceStatus[source] = status;
   const container = document.getElementById('dataSourceStatus');

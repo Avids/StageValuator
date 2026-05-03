@@ -194,7 +194,7 @@ async function fetchMassiveFundamentals(ticker) {
       operatingMargin: companyData?.operating_margin ? formatPercent(companyData.operating_margin) : null,
       
       // Dividend & Risk
-      dividendYield: companyData?.dividend_yield ? formatPercent(companyData.dividend_yield) : 'None',
+      dividendYield: normalizeDividendYield(companyData?.dividend_yield, 'massive'),
       beta: companyData?.beta ? formatRatio(companyData.beta) : null,
       
       // Per Share Metrics

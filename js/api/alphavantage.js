@@ -97,7 +97,7 @@ async function fetchAlphaVantageFundamentals(ticker) {
       returnOnAssets: formatPercent(data.ReturnOnAssetsTTM, 2),
       profitMargin: formatPercent(data.ProfitMargin, 2),
       operatingMargin: formatPercent(data.OperatingMarginTTM, 2),
-      dividendYield: data.DividendYield ? formatPercent(data.DividendYield, 2) : 'None',
+      dividendYield: normalizeDividendYield(data.DividendYield, 'alphaVantage'),
       beta: formatRatio(data.Beta),
       eps: data.EPS ? `$${parseFloat(data.EPS).toFixed(2)}` : null,
       bookValuePerShare: data.BookValue ? `$${parseFloat(data.BookValue).toFixed(2)}` : null,

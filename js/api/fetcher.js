@@ -8,6 +8,7 @@ async function fetchPriceData(ticker) {
   let profileData = null;
   let recommendationsData = null;
   let incomeData = null;
+  const dividendYieldCandidates = [];
   
   // ── Try Massive FIRST (your premium source) ─────────────────────────
   if (hasMassive) {
@@ -20,7 +21,10 @@ async function fetchPriceData(ticker) {
       ]);
       
       if (quote) priceData = quote;
-      if (fundamentals) fundamentalsData = fundamentals;
+      if (fundamentals) {
+        dividendYieldCandidates.push({ source: 'massive', value: fundamentals.dividendYield });
+        fundamentalsData = fundamentals;
+      }
       if (income) incomeData = income;
       if (analyst) recommendationsData = { ...recommendationsData, ...analyst };
     } catch (error) {
@@ -40,7 +44,10 @@ async function fetchPriceData(ticker) {
       
       if (quote && !priceData) priceData = quote;
       if (profile) profileData = profile;
-      if (metrics) fundamentalsData = { ...fundamentalsData, ...metrics };
+      if (metrics) {
+        dividendYieldCandidates.push({ source: 'finnhub', value: metrics.dividendYield });
+        fundamentalsData = { ...fundamentalsData, ...metrics };
+      }
       if (recommendations) recommendationsData = { ...recommendationsData, ...recommendations };
     } catch (error) {
       console.warn('Finnhub partial failure:', error.message);
@@ -57,7 +64,10 @@ async function fetchPriceData(ticker) {
       ]);
       
       if (quote && !priceData) priceData = quote;
-      if (fundamentals) fundamentalsData = { ...fundamentalsData, ...fundamentals };
+      if (fundamentals) {
+        dividendYieldCandidates.push({ source: 'alphaVantage', value: fundamentals.dividendYield });
+        fundamentalsData = { ...fundamentalsData, ...fundamentals };
+      }
       if (income) incomeData = { ...incomeData, ...income };
     } catch (error) {
       console.warn('Alpha Vantage partial failure:', error.message);
@@ -96,7 +106,7 @@ async function fetchPriceData(ticker) {
     returnOnAssets: fundamentalsData?.returnOnAssets || null,
     profitMargin: fundamentalsData?.profitMargin || null,
     operatingMargin: fundamentalsData?.operatingMargin || null,
-    dividendYield: fundamentalsData?.dividendYield || 'None',
+    dividendYield: chooseDividendYield(dividendYieldCandidates, fundamentalsData?.dividendYield),
     fcfYield: fundamentalsData?.fcfYield || null,
     beta: fundamentalsData?.beta || null,
     eps: fundamentalsData?.eps || null,
