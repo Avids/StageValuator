@@ -1,12 +1,7 @@
 async function fetchPriceData(ticker) {
-  const hasFinnhub = !!state.apiKeys.finnhub;
-  const hasAlphaVantage = !!state.apiKeys.alphaVantage;
-  const hasMassive = !!state.apiKeys.massive;
-  
-  // Check if at least one API is configured
-  if (!hasFinnhub && !hasAlphaVantage && !hasMassive) {
-    throw new Error('⚠ No API configured. Please add at least one API key in Settings (⚙ button):\n\n• Massive API (rich fundamentals + aggregates)\n• Finnhub (fast price + metrics)\n• Alpha Vantage (fundamentals)');
-  }
+  const hasFinnhub = hasApiAccess('finnhub');
+  const hasAlphaVantage = hasApiAccess('alphaVantage');
+  const hasMassive = hasApiAccess('massive');
   
   let priceData = null;
   let fundamentalsData = null;

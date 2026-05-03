@@ -4,14 +4,15 @@ async function fetchFinnhubQuote(ticker) {
   const source = 'Finnhub Quote';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.finnhub) {
+  if (!hasApiAccess('finnhub')) {
     updateSourceStatus(source, 'error');
     throw new Error('Finnhub API key not configured');
   }
   
   try {
-    const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('finnhub')
+      ? await fetchDeploymentApi('finnhub', { endpoint: 'quote', symbol: ticker })
+      : await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${state.apiKeys.finnhub}`);
     
     if (!response.ok) {
       if (response.status === 429) throw new Error('Rate limit exceeded');
@@ -56,14 +57,15 @@ async function fetchFinnhubProfile(ticker) {
   const source = 'Finnhub Profile';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.finnhub) {
+  if (!hasApiAccess('finnhub')) {
     updateSourceStatus(source, 'error');
     return null;
   }
   
   try {
-    const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('finnhub')
+      ? await fetchDeploymentApi('finnhub', { endpoint: 'profile', symbol: ticker })
+      : await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${state.apiKeys.finnhub}`);
     
     if (!response.ok) return null;
     
@@ -87,14 +89,15 @@ async function fetchFinnhubMetrics(ticker) {
   const source = 'Finnhub Metrics';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.finnhub) {
+  if (!hasApiAccess('finnhub')) {
     updateSourceStatus(source, 'error');
     return null;
   }
   
   try {
-    const url = `https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${state.apiKeys.finnhub}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('finnhub')
+      ? await fetchDeploymentApi('finnhub', { endpoint: 'metrics', symbol: ticker })
+      : await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${state.apiKeys.finnhub}`);
     
     if (!response.ok) return null;
     
@@ -147,14 +150,15 @@ async function fetchFinnhubRecommendations(ticker) {
   const source = 'Finnhub Recommendations';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.finnhub) {
+  if (!hasApiAccess('finnhub')) {
     updateSourceStatus(source, 'error');
     return null;
   }
   
   try {
-    const url = `https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${state.apiKeys.finnhub}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('finnhub')
+      ? await fetchDeploymentApi('finnhub', { endpoint: 'recommendations', symbol: ticker })
+      : await fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${state.apiKeys.finnhub}`);
     
     if (!response.ok) return null;
     

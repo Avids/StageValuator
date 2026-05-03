@@ -12,6 +12,11 @@ const state = {
     massive: '',  // ✓ Massive (Polygon) API key
     corsProxy: 'https://corsproxy.io/?'
   },
+  deploymentApiKeys: {
+    finnhub: false,
+    alphaVantage: false,
+    massive: false
+  },
   sourceStatus: {},
   rateLimit: {
     used: 0,

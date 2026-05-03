@@ -4,14 +4,15 @@ async function fetchAlphaVantageQuote(ticker) {
   const source = 'Alpha Vantage Quote';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.alphaVantage) {
+  if (!hasApiAccess('alphaVantage')) {
     updateSourceStatus(source, 'error');
     throw new Error('Alpha Vantage API key not configured');
   }
   
   try {
-    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('alphaVantage')
+      ? await fetchDeploymentApi('alphavantage', { function: 'GLOBAL_QUOTE', symbol: ticker })
+      : await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`);
     
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
@@ -47,14 +48,15 @@ async function fetchAlphaVantageFundamentals(ticker) {
   const source = 'Alpha Vantage Fundamentals';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.alphaVantage) {
+  if (!hasApiAccess('alphaVantage')) {
     updateSourceStatus(source, 'error');
     return null;
   }
   
   try {
-    const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('alphaVantage')
+      ? await fetchDeploymentApi('alphavantage', { function: 'OVERVIEW', symbol: ticker })
+      : await fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`);
     
     if (!response.ok) return null;
     
@@ -111,14 +113,15 @@ async function fetchAlphaVantageIncome(ticker) {
   const source = 'Alpha Vantage Income';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.alphaVantage) {
+  if (!hasApiAccess('alphaVantage')) {
     updateSourceStatus(source, 'error');
     return null;
   }
   
   try {
-    const url = `https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`;
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('alphaVantage')
+      ? await fetchDeploymentApi('alphavantage', { function: 'INCOME_STATEMENT', symbol: ticker })
+      : await fetch(`https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol=${ticker}&apikey=${state.apiKeys.alphaVantage}`);
     
     if (!response.ok) return null;
     

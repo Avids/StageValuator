@@ -23,20 +23,41 @@ function updateApiKeyStatus() {
   const massiveStatus = document.getElementById('massiveStatus');
   
   if (finnhubStatus) {
-    finnhubStatus.className = 'status-badge ' + (state.apiKeys.finnhub ? 'connected' : 'disconnected');
-    finnhubStatus.innerHTML = `<span>●</span><span>Finnhub: ${state.apiKeys.finnhub ? 'Connected' : 'Not Connected'}</span>`;
+    const hasFinnhub = hasApiAccess('finnhub');
+    const label = state.apiKeys.finnhub ? 'User Key' : (state.deploymentApiKeys.finnhub ? 'Vercel Key' : 'Not Connected');
+    finnhubStatus.className = 'status-badge ' + (hasFinnhub ? 'connected' : 'disconnected');
+    finnhubStatus.innerHTML = `<span>●</span><span>Finnhub: ${label}</span>`;
   }
   
   if (alphaStatus) {
-    alphaStatus.className = 'status-badge ' + (state.apiKeys.alphaVantage ? 'connected' : 'disconnected');
-    alphaStatus.innerHTML = `<span>●</span><span>Alpha Vantage: ${state.apiKeys.alphaVantage ? 'Connected' : 'Not Connected'}</span>`;
+    const hasAlpha = hasApiAccess('alphaVantage');
+    const label = state.apiKeys.alphaVantage ? 'User Key' : (state.deploymentApiKeys.alphaVantage ? 'Vercel Key' : 'Not Connected');
+    alphaStatus.className = 'status-badge ' + (hasAlpha ? 'connected' : 'disconnected');
+    alphaStatus.innerHTML = `<span>●</span><span>Alpha Vantage: ${label}</span>`;
   }
   
   if (massiveStatus) {
-    massiveStatus.className = 'status-badge ' + (state.apiKeys.massive ? 'connected' : 'disconnected');
-    massiveStatus.innerHTML = `<span>●</span><span>MASSIVE: ${state.apiKeys.massive ? 'Connected' : 'Not Connected'}</span>`;
+    const hasMassive = hasApiAccess('massive');
+    const label = state.apiKeys.massive ? 'User Key' : (state.deploymentApiKeys.massive ? 'Vercel Key' : 'Not Connected');
+    massiveStatus.className = 'status-badge ' + (hasMassive ? 'connected' : 'disconnected');
+    massiveStatus.innerHTML = `<span>●</span><span>MASSIVE: ${label}</span>`;
   }
   
+  const keyBadges = [
+    ['finnhubKeyStatus', 'finnhub'],
+    ['alphaKeyStatus', 'alphaVantage'],
+    ['massiveKeyStatus', 'massive']
+  ];
+
+  keyBadges.forEach(([elementId, provider]) => {
+    const badge = document.getElementById(elementId);
+    if (!badge) return;
+
+    const hasAccess = hasApiAccess(provider);
+    badge.className = 'status-badge ' + (hasAccess ? 'connected' : 'disconnected');
+    badge.textContent = state.apiKeys[provider] ? 'User Key' : (state.deploymentApiKeys[provider] ? 'Vercel Key' : 'Not Set');
+  });
+
   // Update input values
   const finnhubInput = document.getElementById('finnhubKeyInput');
   const alphaInput = document.getElementById('alphaKeyInput');

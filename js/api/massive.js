@@ -29,7 +29,7 @@ async function fetchMassiveQuote(ticker) {
   const source = 'Massive Quote';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.massive) {
+  if (!hasApiAccess('massive')) {
     updateSourceStatus(source, 'error');
     throw new Error('Massive API key not configured');
   }
@@ -37,12 +37,12 @@ async function fetchMassiveQuote(ticker) {
   try {
     // Use Snapshot API for current price (most reliable for real-time)
     // Endpoint: /v2/snapshot/locale/us/markets/stocks/tickers/{ticker}
-    const url = buildMassiveUrl(
-      `/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`,
-      { apiKey: state.apiKeys.massive }
-    );
-    
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('massive')
+      ? await fetchDeploymentApi('massive', { endpoint: 'snapshot', ticker })
+      : await fetch(buildMassiveUrl(
+          `/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`,
+          { apiKey: state.apiKeys.massive }
+        ));
     
     if (!response.ok) {
       handleMassiveError(response, 'snapshot');
@@ -91,7 +91,7 @@ async function fetchMassiveFundamentals(ticker) {
   const source = 'Massive Fundamentals';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.massive) {
+  if (!hasApiAccess('massive')) {
     updateSourceStatus(source, 'error');
     return null;
   }
@@ -102,12 +102,12 @@ async function fetchMassiveFundamentals(ticker) {
     // Fallback: Use aggregates to calculate some metrics
     
     // First try to get company overview via reference endpoint
-    const overviewUrl = buildMassiveUrl(
-      `/v3/reference/tickers/${ticker}`,
-      { apiKey: state.apiKeys.massive }
-    );
-    
-    const overviewResponse = await fetch(overviewUrl);
+    const overviewResponse = shouldUseDeploymentApi('massive')
+      ? await fetchDeploymentApi('massive', { endpoint: 'tickerDetails', ticker })
+      : await fetch(buildMassiveUrl(
+          `/v3/reference/tickers/${ticker}`,
+          { apiKey: state.apiKeys.massive }
+        ));
     let companyData = null;
     
     if (overviewResponse.ok) {
@@ -119,17 +119,25 @@ async function fetchMassiveFundamentals(ticker) {
     const today = new Date();
     const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
     
-    const aggregatesUrl = buildMassiveUrl(
-      `/v2/aggs/ticker/${ticker}/range/1/day/${oneYearAgo.toISOString().split('T')[0]}/${today.toISOString().split('T')[0]}`,
-      { 
-        apiKey: state.apiKeys.massive,
-        adjusted: 'true',
-        sort: 'asc',
-        limit: '252' // ~1 trading year
-      }
-    );
-    
-    const aggregatesResponse = await fetch(aggregatesUrl);
+    const aggregatesResponse = shouldUseDeploymentApi('massive')
+      ? await fetchDeploymentApi('massive', {
+          endpoint: 'aggregates',
+          ticker,
+          from: oneYearAgo.toISOString().split('T')[0],
+          to: today.toISOString().split('T')[0],
+          adjusted: 'true',
+          sort: 'asc',
+          limit: '252'
+        })
+      : await fetch(buildMassiveUrl(
+          `/v2/aggs/ticker/${ticker}/range/1/day/${oneYearAgo.toISOString().split('T')[0]}/${today.toISOString().split('T')[0]}`,
+          { 
+            apiKey: state.apiKeys.massive,
+            adjusted: 'true',
+            sort: 'asc',
+            limit: '252' // ~1 trading year
+          }
+        ));
     let aggregatesData = null;
     
     if (aggregatesResponse.ok) {
@@ -216,7 +224,7 @@ async function fetchMassiveIncomeStatement(ticker) {
   const source = 'Massive Income';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.massive) {
+  if (!hasApiAccess('massive')) {
     updateSourceStatus(source, 'error');
     return null;
   }
@@ -224,17 +232,22 @@ async function fetchMassiveIncomeStatement(ticker) {
   try {
     // Financial statements endpoint (if available)
     // Note: Massive/Polygon financials API structure may require subscription
-    const url = buildMassiveUrl(
-      `/vX/reference/financials`,
-      { 
-        apiKey: state.apiKeys.massive,
-        ticker: ticker,
-        timeframe: 'annual',
-        limit: '1'
-      }
-    );
-    
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('massive')
+      ? await fetchDeploymentApi('massive', {
+          endpoint: 'financials',
+          ticker,
+          timeframe: 'annual',
+          limit: '1'
+        })
+      : await fetch(buildMassiveUrl(
+          `/vX/reference/financials`,
+          { 
+            apiKey: state.apiKeys.massive,
+            ticker: ticker,
+            timeframe: 'annual',
+            limit: '1'
+          }
+        ));
     
     if (!response.ok) {
       // Financials may not be available on free tier - return null gracefully
@@ -277,19 +290,19 @@ async function fetchMassiveAnalystEstimates(ticker) {
   const source = 'Massive Analyst';
   updateSourceStatus(source, 'pending');
   
-  if (!state.apiKeys.massive) {
+  if (!hasApiAccess('massive')) {
     updateSourceStatus(source, 'error');
     return null;
   }
   
   try {
     // Analyst estimates endpoint (premium feature)
-    const url = buildMassiveUrl(
-      `/v1/analyst_estimates/tickers/${ticker}`,
-      { apiKey: state.apiKeys.massive }
-    );
-    
-    const response = await fetch(url);
+    const response = shouldUseDeploymentApi('massive')
+      ? await fetchDeploymentApi('massive', { endpoint: 'analyst', ticker })
+      : await fetch(buildMassiveUrl(
+          `/v1/analyst_estimates/tickers/${ticker}`,
+          { apiKey: state.apiKeys.massive }
+        ));
     
     if (!response.ok) {
       updateSourceStatus(source, 'pending'); // Not available on all tiers

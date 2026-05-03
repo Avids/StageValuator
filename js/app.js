@@ -58,7 +58,15 @@ async function testConnection(apiName) {
   const btn = document.getElementById(`test${apiName}Btn`);
   
   const apiKey = keyInput.value.trim();
-  if (!apiKey) {
+  const providerMap = {
+    Finnhub: 'finnhub',
+    Alpha: 'alphaVantage',
+    Massive: 'massive'
+  };
+  const provider = providerMap[apiName];
+  const useDeploymentKey = !apiKey && provider && state.deploymentApiKeys[provider];
+
+  if (!apiKey && !useDeploymentKey) {
     if (resultDiv) {
       resultDiv.textContent = '❌ Please enter an API key first';
       resultDiv.style.color = '#dc2626';
@@ -75,12 +83,18 @@ async function testConnection(apiName) {
   try {
     let url, testSymbol = 'AAPL';
     
-    if (apiName === 'Finnhub') {
+    if (useDeploymentKey && apiName === 'Finnhub') {
+      url = `/api/finnhub?endpoint=quote&symbol=${testSymbol}`;
+    } else if (useDeploymentKey && apiName === 'Alpha') {
+      url = `/api/alphavantage?function=GLOBAL_QUOTE&symbol=${testSymbol}`;
+    } else if (useDeploymentKey && apiName === 'Massive') {
+      url = `/api/massive?endpoint=snapshot&ticker=${testSymbol}`;
+    } else if (apiName === 'Finnhub') {
       url = `https://finnhub.io/api/v1/quote?symbol=${testSymbol}&token=${apiKey}`;
     } else if (apiName === 'Alpha') {
       url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${testSymbol}&apikey=${apiKey}`;
     } else if (apiName === 'Massive') {
-      url = `https://api.massive.com/v1/quote?symbol=${testSymbol}&key=${apiKey}`;
+      url = `https://api.massive.com/v2/snapshot/locale/us/markets/stocks/tickers/${testSymbol}?apiKey=${apiKey}`;
     }
     
     const response = await fetch(url);
@@ -199,6 +213,7 @@ function init() {
   loadApiKeys();
   setupEventListeners();
   updateApiKeyStatus();
+  loadDeploymentApiStatus().then(updateApiKeyStatus);
   console.log('StageValuator initialized');
 }
 
